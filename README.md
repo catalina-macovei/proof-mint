@@ -21,6 +21,12 @@ npm install
 ```
 npm start
 ```
+- Make sure to change PROOF and UCAN env variables in .env file
+
+- In another terminal run the server.js
+```
+node server.js
+```
 
 The process of uploading a file to IPFS:
 ![Process Diagram](frontend/public/images/process-diagram.png)
