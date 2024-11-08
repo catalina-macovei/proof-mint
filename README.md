@@ -30,3 +30,7 @@ node server.js
 
 The process of uploading a file to IPFS:
 ![Process Diagram](frontend/public/images/process-diagram.png)
+
+
+## Authors
+- Macovei Catalina 
