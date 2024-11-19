@@ -17,16 +17,16 @@ A blockchain app for decentralized certificate verification.
 ```
 npm install
 ```
-- Run the app with        
-```
-npm start
-```
 - Make sure to change .env variables
 ```
 INFURA_API_KEY=
 PRIVATE_KEY=
 KEY=
 PROOF=
+```
+- Run the app with        
+```
+npm start
 ```
 
 - In another terminal run the server.js
