@@ -56,8 +56,10 @@ npx hardhat test
 ```
 
 ### Diagrams
-The process of uploading a file to IPFS:
+#### The process of uploading a file to IPFS:
 ![Process Diagram](frontend/public/images/process-diagram.png)
+#### The workflow of the app:
+![Workflow Diagram](frontend/public/images/image.png)
 
 
 ## Authors
