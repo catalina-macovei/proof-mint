@@ -5,52 +5,52 @@ import cors from 'cors'; // CORS is a middleware
 import dotenv from 'dotenv';
 import W3client from './w3client.js';
 
-// Initialize the express app
-const app = express();
+
+// initializare express application
+const application = express();
 const port = 8000;
 dotenv.config();
 
-// Initialize W3client and Web3.Storage client
-const w2c = new W3client();  // Use the Singleton instance
-await w2c.init(); 
+// initializare W3client si Web3.Storage client cu instanta Singleton
+const w2client = new W3client();  
+await w2client.init();
 
-// Use CORS middleware
-app.use(cors());
+// cors este un middleware
+application.use(cors());
 
-// Set up multer for file uploads
-const storage = multer.memoryStorage(); 
-const upload = multer({ storage });
+// multer este pentru file uploads
+const blobStorage = multer.memoryStorage(); // Store file in memory as buffer
+const upload = multer({ blobStorage });
 
-// API endpoint to upload file to Web3.Storage
-app.post('/api/v1/upload', upload.single('file'), async (req, res) => {
+// Endpoint pentru upload 
+application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
 
     try {
-        // Convert the buffer to a Blob
+        // convertire buff in Blob
         const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
 
         const uploadOptions = {}; 
 
-        const cid = await w2c.client.uploadFile(fileBlob, uploadOptions);
+        const cid = await w2client.client.uploadFile(fileBlob, uploadOptions);
     
-        // Log the file CID 
-        console.log('File uploaded successfully with CID:', cid);
-        // Return success response with the CID of the uploaded file
+        // afis CID -> pentru checkup
+        console.log('Fisier incarcat cu succes-> CID:', cid);
         res.status(200).json({
-            message: 'File uploaded successfully',
+            message: 'Succes!!!',
             cid: cid
         });
     } catch (error) {
-        console.error('Error during file upload:', error);
-        res.status(500).json({ message: 'Error uploading the file to Web3.Storage' });
+        console.error('Eroare in timpul incarcarii:', error);
+        res.status(500).json({ message: 'Eroare in timpul incarcarii in Web3.Storage' });
     }
 });
 
 
 
 // Start the server
-app.listen(port, () => {
+application.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
