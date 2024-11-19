@@ -6,6 +6,7 @@ A blockchain app for decentralized certificate verification.
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installing](#installing)
+  - [Diagrams](#diagrams)
 - [Authors](#authors)
 
 ## Getting Started
@@ -54,6 +55,7 @@ npx hardhat run scripts/deploy-contract-name.js --network sepolia
 npx hardhat test
 ```
 
+### Diagrams
 The process of uploading a file to IPFS:
 ![Process Diagram](frontend/public/images/process-diagram.png)
 
