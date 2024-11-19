@@ -21,7 +21,13 @@ npm install
 ```
 npm start
 ```
-- Make sure to change PROOF and UCAN env variables in .env file
+- Make sure to change .env variables
+```
+INFURA_API_KEY=
+PRIVATE_KEY=
+KEY=
+PROOF=
+```
 
 - In another terminal run the server.js
 ```
