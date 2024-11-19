@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { Blob } from 'buffer'; 
-import cors from 'cors'; // CORS is a middleware
+import cors from 'cors'; // CORS e middleware
 import dotenv from 'dotenv';
 import W3client from './w3client.js';
 
