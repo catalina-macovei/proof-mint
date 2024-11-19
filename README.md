@@ -28,6 +28,19 @@ npm start
 node server.js
 ```
 
+- Compile the contracts
+```
+npx hardhat compile
+```
+- Deploy the contract
+```
+npx hardhat run scripts/deploy-contract-name.js --network sepolia
+```
+- Run the tests
+```
+npx hardhat test
+```
+
 The process of uploading a file to IPFS:
 ![Process Diagram](frontend/public/images/process-diagram.png)
 
