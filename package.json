@@ -1,0 +1,26 @@
+{
+  "name": "proof-mint",
+  "version": "1.0.0",
+  "description": "A blockchain app for decentralized certificate verification.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/catalina-macovei/proof-mint.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/catalina-macovei/proof-mint/issues"
+  },
+  "homepage": "https://github.com/catalina-macovei/proof-mint#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.16"
+  }
+}
