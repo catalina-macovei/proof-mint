@@ -1,6 +1,13 @@
 # ProofMINT :rocket:
 A blockchain app for decentralized certificate verification.
 
+
+## Table of Contents
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installing](#installing)
+- [Authors](#authors)
+
 ## Getting Started
 ### Prerequisites   
 - Node.js
