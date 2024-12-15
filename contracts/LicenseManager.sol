@@ -1,30 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract LicenseManager is Ownable {
-    // Structure for storing license details
+contract LicenseManager {
     struct License {
-        string ipfsCID;      // IPFS hash of the diploma
-        address studentDID;  // Student's DID (digital identity)
-        bool isValid;        // Validity status
-        uint256 timestamp;   // When the license was issued
+        string ipfsCID;      
+        address studentDID;  
+        bool isValid;        
+        uint256 timestamp;   
     }
 
-    // Mapping from license CID to License struct
     mapping(string => License) public licenses;
+    mapping(address => bool) public isIssuer;
     
-    // Events
     event LicenseIssued(string ipfsCID, address studentDID);
     event LicenseRevoked(string ipfsCID, address studentDID);
+    event IssuerAdded(address issuer);
+    event IssuerRemoved(address issuer);
 
-    constructor() Ownable(msg.sender) {}
+    modifier onlyIssuer() {
+        require(isIssuer[msg.sender], "Not authorized as issuer");
+        _;
+    }
 
-    // Issue a new license
-    function issueLicense(string memory _ipfsCID, address _studentDID) 
-        external 
-        onlyOwner 
-    {
+    constructor() {
+        isIssuer[msg.sender] = true;
+        emit IssuerAdded(msg.sender);
+    }
+
+    // se verifica daca issuerul exista si daca nu este el insusi, altfel nu se poate adauga
+    function addIssuer(address _newIssuer) external onlyIssuer {
+        isIssuer[_newIssuer] = true;
+        emit IssuerAdded(_newIssuer);
+    }
+
+    // se verifica daca issuerul exista si daca nu este el insusi, altfel nu se poate sterge
+    function removeIssuer(address _issuer) external onlyIssuer {
+        require(_issuer != msg.sender, "Cannot remove self");
+        isIssuer[_issuer] = false;
+        emit IssuerRemoved(_issuer);
+    }
+
+    // se verifica CID, DID si daca acestea deja exista -> nu se poate crea o noua licenta
+    function issueLicense(string memory _ipfsCID, address _studentDID) external onlyIssuer {
         require(bytes(_ipfsCID).length > 0, "Invalid IPFS CID");
         require(_studentDID != address(0), "Invalid student DID");
         require(licenses[_ipfsCID].studentDID == address(0), "License already exists");
@@ -39,11 +56,8 @@ contract LicenseManager is Ownable {
         emit LicenseIssued(_ipfsCID, _studentDID);
     }
 
-    // Revoke a license
-    function revokeLicense(string memory _ipfsCID) 
-        external 
-        onlyOwner 
-    {
+    // se verifica CID si daca exista deja o licenta cu acest CID -> se poate sterge
+    function revokeLicense(string memory _ipfsCID) external onlyIssuer {
         require(bytes(_ipfsCID).length > 0, "Invalid IPFS CID");
         require(licenses[_ipfsCID].studentDID != address(0), "License does not exist");
         
@@ -52,22 +66,12 @@ contract LicenseManager is Ownable {
         emit LicenseRevoked(_ipfsCID, licenses[_ipfsCID].studentDID);
     }
 
-    // Verify if a license is valid
-    function verifyLicense(string memory _ipfsCID) 
-        external 
-        view 
-        returns (bool isValid, address studentDID) 
-    {
+    function verifyLicense(string memory _ipfsCID) external view returns (bool isValid, address studentDID) {
         License memory license = licenses[_ipfsCID];
         return (license.isValid, license.studentDID);
     }
 
-    // Get full license details
-    function getLicenseDetails(string memory _ipfsCID)
-        external
-        view
-        returns (License memory)
-    {
+    function getLicenseDetails(string memory _ipfsCID) external view returns (License memory) {
         return licenses[_ipfsCID];
     }
 }
