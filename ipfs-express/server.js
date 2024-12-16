@@ -18,17 +18,11 @@ console.log('Environment variables loaded:', {
     hasContractAddress: !!process.env.CONTRACT_ADDRESS
 });
 
-
-// After your imports
-console.log('Contract ABI:', LicenseManager.abi ? 'Loaded' : 'Not loaded');
-console.log('Contract Address:', process.env.CONTRACT_ADDRESS);
-
 // Initialize contract with explicit values
 const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
 const privateKey = process.env.PRIVATE_KEY.startsWith('0x') 
     ? process.env.PRIVATE_KEY 
     : `0x${process.env.PRIVATE_KEY}`;
-
 
 const signer = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(
@@ -48,8 +42,7 @@ application.use(cors());
 const blobStorage = multer.memoryStorage();
 const upload = multer({ blobStorage });
 
-const testAddress = "0x742e642c45a0f10159e4f3d46c2468dc85e9d706"; // student did
-
+const testAddress = "0x742e642c45a0f10159e4f3d46c2468dc85e9d706"; // student DID
 
 // application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
 //     if (!req.file) {
@@ -100,7 +93,81 @@ application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ message: 'Error processing request' });
     }
-    
+});
+
+// Route to revoke a license
+application.use(express.json());
+
+
+application.get('/api/v1/revoke-license', async (req, res) => {
+    const { studentDID } = req.query;
+
+    if (!studentDID) {
+        console.log('Missing required parameter: studentDID');
+        return res.status(400).send('Missing required parameter: studentDID');
+    }
+
+    try {
+        // Fetch the CID for the studentDID (this logic needs to be implemented based on your data store)
+        const cid = await fetchCIDForStudent(studentDID); // Replace with real data fetching
+        if (!cid) {
+            console.log('CID not found for studentDID:', studentDID);
+            return res.status(404).send('CID not found for student');
+        }
+
+        console.log('CID to revoke:', cid);
+
+        // Call the revokeLicense function on the contract
+        const tx = await contract.revokeLicense(cid);
+
+        // Wait for the transaction to be mined
+        const receipt = await tx.wait();
+
+        // Send response with transaction hash
+        res.json({
+            success: true,
+            transactionHash: receipt.hash
+        });
+    } catch (error) {
+        console.error('Error revoking license:', error);
+        res.status(500).send('Error revoking license');
+    }
+});
+
+// Example function to fetch CID based on studentDID (replace with actual logic)
+async function fetchCIDForStudent(studentDID) {
+    // Example: mock CID fetching logic, replace with actual data source (e.g., database)
+    const mockDatabase = {
+        "student123": "bafkreicvmiem7h67ur7gc26rjjqkcrwnwzmissrbesjmep4hdvlxp5f5dy",  // example CID
+    };
+
+    return mockDatabase[studentDID];  // Return the CID if exists, otherwise return undefined
+}
+
+
+
+
+// Route to verify a license
+application.get('/api/v1/verify-license', async (req, res) => {
+    const { studentDID } = req.query;
+
+    if (!studentDID) {
+        console.log('Missing required parameter: studentDID');
+        return res.status(400).send('Missing required parameter: studentDID');
+    }
+
+    try {
+        // Call the smart contract to verify if the student has a valid license
+        const cid = "bafkreicvmiem7h67ur7gc26rjjqkcrwnwzmissrbesjmep4hdvlxp5f5dy";  // you would need to pass or get the CID
+        console.log('hit:', cid);
+
+        const [isValid, licenseStudentDID] = await contract.verifyLicense(cid);
+
+        res.json({ success: true, isValid, licenseStudentDID });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error verifying license');
+    }
 });
 
 

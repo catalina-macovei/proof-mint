@@ -61,6 +61,9 @@ contract LicenseManager {
         require(bytes(_ipfsCID).length > 0, "Invalid IPFS CID");
         require(licenses[_ipfsCID].studentDID != address(0), "License does not exist");
         
+        // Check if the license is already revoked (i.e., isValid is false)
+        //require(licenses[_ipfsCID].isValid == false, "License is already revoked");
+
         licenses[_ipfsCID].isValid = false;
         
         emit LicenseRevoked(_ipfsCID, licenses[_ipfsCID].studentDID);
