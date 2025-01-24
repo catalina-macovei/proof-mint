@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ account, onConnect, loading }) => {
   return (
     <nav className="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
@@ -11,6 +11,14 @@ const Navbar = () => {
         </span>
         <div className="items-center justify-between hidden w-full md:flex md:w-auto">
           <ul className="flex space-x-8 font-medium">
+          <li>
+              <Link
+                to="/create-did"
+                className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500"
+              >
+                Create DID
+              </Link>
+            </li>
           <li>
               <Link
                 to="/"
@@ -42,6 +50,21 @@ const Navbar = () => {
               >
                 Revoke License
               </Link>
+            </li>
+            <li>
+              {!account ? (
+                <button 
+                  onClick={onConnect}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                >
+                  {loading ? 'Connecting...' : 'Connect Wallet'}
+                </button>
+              ) : (
+                <span className="px-4 py-2 bg-gray-100 rounded-lg">
+                  {account.slice(0, 6)}...{account.slice(-4)}
+                </span>
+              )}
             </li>
           </ul>
         </div>

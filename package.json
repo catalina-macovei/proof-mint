@@ -22,5 +22,14 @@
     "@openzeppelin/contracts": "^5.1.0",
     "dotenv": "^16.4.5",
     "hardhat": "^2.22.16"
+  },
+  "dependencies": {
+    "@craco/craco": "^7.1.0",
+    "@veramo/core": "^6.0.0",
+    "@veramo/credential-w3c": "^6.0.0",
+    "@veramo/data-store": "^6.0.0",
+    "@veramo/did-provider-ethr": "^6.0.0",
+    "@veramo/did-resolver": "^6.0.0",
+    "@veramo/key-manager": "^6.0.0"
   }
 }

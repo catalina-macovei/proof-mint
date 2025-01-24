@@ -71,29 +71,28 @@ const testAddress = "0x742e642c45a0f10159e4f3d46c2468dc85e9d706"; // student DID
 //     }
 // });
 
+
 application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
     try {
         const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
-        const uploadOptions = {}; 
+        const uploadOptions = {};
         const cid = await w2client.client.uploadFile(fileBlob, uploadOptions);
-        
         const cidString = cid.toString();
-        
-        const tx = await contract.issueLicense(cidString, testAddress);
-        const receipt = await tx.wait();
-    
-        console.log('File uploaded and license issued -> CID:', cidString, 'TX:', receipt.hash);
-        
+
+        console.log('File uploaded to IPFS -> CID:', cidString);
+
         res.status(200).json({
             message: 'Success',
-            cid: cidString,
-            transactionHash: receipt.hash
+            ipfsHash: cidString
         });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Error processing request' });
     }
 });
+
+
+
 
 // Route to revoke a license
 application.use(express.json());
@@ -108,8 +107,8 @@ application.get('/api/v1/revoke-license', async (req, res) => {
     }
 
     try {
-        // Fetch the CID for the studentDID (this logic needs to be implemented based on your data store)
-        const cid = await fetchCIDForStudent(studentDID); // Replace with real data fetching
+        // Fetch the CID for the studentDID 
+        const cid = await fetchCIDForStudent(studentDID); 
         if (!cid) {
             console.log('CID not found for studentDID:', studentDID);
             return res.status(404).send('CID not found for student');
@@ -120,13 +119,15 @@ application.get('/api/v1/revoke-license', async (req, res) => {
         // Call the revokeLicense function on the contract
         const tx = await contract.revokeLicense(cid);
 
-        // Wait for the transaction to be mined
-        const receipt = await tx.wait();
+        // Optionally, wait for the transaction to be mined 
+        // const receipt = await tx.wait();
 
-        // Send response with transaction hash
+        console.log('License revoked -> CID:', cid, 'TX:', tx.hash);
+        
         res.json({
             success: true,
-            transactionHash: receipt.hash
+            message: 'License revocation initiated',
+            transactionHash: tx.hash
         });
     } catch (error) {
         console.error('Error revoking license:', error);
@@ -134,14 +135,14 @@ application.get('/api/v1/revoke-license', async (req, res) => {
     }
 });
 
-// Example function to fetch CID based on studentDID (replace with actual logic)
+// Example function to fetch CID based on studentDID 
 async function fetchCIDForStudent(studentDID) {
-    // Example: mock CID fetching logic, replace with actual data source (e.g., database)
+    //mock CID fetching logic
     const mockDatabase = {
-        "student123": "bafkreicvmiem7h67ur7gc26rjjqkcrwnwzmissrbesjmep4hdvlxp5f5dy",  // example CID
+        "student123": "bafkreihnz3bvpnojbhilcab2mv7zsfdr4pci5nlvab3pz76nfz4g3k6ne4",  //test CID
     };
 
-    return mockDatabase[studentDID];  // Return the CID if exists, otherwise return undefined
+    return mockDatabase[studentDID]; 
 }
 
 
@@ -157,15 +158,14 @@ application.get('/api/v1/verify-license', async (req, res) => {
     }
 
     try {
-        // Call the smart contract to verify if the student has a valid license
-        const cid = "bafkreicvmiem7h67ur7gc26rjjqkcrwnwzmissrbesjmep4hdvlxp5f5dy";  // you would need to pass or get the CID
-        console.log('hit:', cid);
+        const cid = "bafkreihnz3bvpnojbhilcab2mv7zsfdr4pci5nlvab3pz76nfz4g3k6ne4";  //test cid
+        console.log('Verifying license with CID:', cid);
 
         const [isValid, licenseStudentDID] = await contract.verifyLicense(cid);
-
+        console.log('License is valid:', isValid, 'for Student DID:', licenseStudentDID);
         res.json({ success: true, isValid, licenseStudentDID });
     } catch (error) {
-        console.error(error);
+        console.error('Error verifying license:', error);
         res.status(500).send('Error verifying license');
     }
 });

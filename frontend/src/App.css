@@ -7,6 +7,20 @@
   pointer-events: none;
 }
 
+pre {
+  font-family: monospace;
+  white-space: pre;
+}
+
+#result {
+  text-align: left;
+  width: 900px;
+  background-color: #24232d;
+  color: #25c2a0;
+  padding: 15px;
+  overflow: scroll;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;

@@ -15,6 +15,21 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# Yarn specific
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+*.tgz
+.yarn-integrity
+
+# Veramo specific
+.did-jwt/
+.credentials/
+
 # Logs and runtime data
 logs
 *.log

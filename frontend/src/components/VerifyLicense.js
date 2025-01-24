@@ -1,76 +1,79 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { ethers } from 'ethers';
+import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
+import { CONTRACT_ADDRESS } from '../config/contract';
 
 const VerifyLicense = () => {
-    const [studentDID, setStudentDID] = useState('');
+    const [ipfsCID, setIpfsCID] = useState('');
     const [isLicenseValid, setIsLicenseValid] = useState(null);
     const [licenseStudentDID, setLicenseStudentDID] = useState('');
     const [error, setError] = useState('');
 
     const handleVerify = async () => {
-        if (!studentDID) {
-            setError('Please enter a student DID');
+        if (!ipfsCID) {
+            setError('Please enter an IPFS CID');
             return;
         }
 
         try {
-            const response = await axios.get('http://localhost:8000/api/v1/verify-license', {
-                params: { studentDID: "yourStudentDID" }
-            });
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const contract = new ethers.Contract(
+                CONTRACT_ADDRESS,
+                LicenseManager.abi,
+                provider
+            );
 
-            if (response.data.success) {
-                setIsLicenseValid(response.data.isValid);
-                setLicenseStudentDID(response.data.licenseStudentDID);
-                setError('');
-            } else {
-                setIsLicenseValid(false);
-                setLicenseStudentDID('');
-                setError('License not found');
-            }
+            const [isValid, studentDID] = await contract.verifyLicense(ipfsCID);
+            
+            setIsLicenseValid(isValid);
+            setLicenseStudentDID(studentDID);
+            setError('');
         } catch (err) {
-            setError('Error verifying license');
+            setError('Error verifying license: ' + err.message);
             console.error(err);
         }
     };
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
-        <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
-            {/* Input field for student DID */}
-            <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Verify License</h2>
+            <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
+                <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Verify License</h2>
 
-            <input
-                type="text"
-                placeholder="Enter Student DID"
-                value={studentDID}
-                onChange={(e) => setStudentDID(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+                <input
+                    type="text"
+                    placeholder="Enter IPFS CID"
+                    value={ipfsCID}
+                    onChange={(e) => setIpfsCID(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
 
-            {/* Button to trigger license verification */}
-            <button
-                onClick={handleVerify}
-                className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
-            >
-                Verify License
-            </button>
+                <button
+                    onClick={handleVerify}
+                    className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+                >
+                    Verify License
+                </button>
 
-            {/* Display error message if there was an error */}
-            {error && (
-                <p className="mt-4 text-red-500 font-medium">
-                    {error}
-                </p>
-            )}
+                {error && (
+                    <p className="mt-4 text-red-500 font-medium">
+                        {error}
+                    </p>
+                )}
 
-            {/* Display license validity result */}
-            {isLicenseValid !== null && (
-                <p className="mt-4 text-lg font-medium truncate">
-                    License {isLicenseValid ? 'Valid' : 'Invalid'} for Student DID:
-                    <span className="font-semibold">{licenseStudentDID}</span>
-                </p>
-            )}
+                {isLicenseValid !== null && (
+                    <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <p className="text-lg font-medium">
+                            Status: <span className={isLicenseValid ? "text-green-500" : "text-red-500"}>
+                                {isLicenseValid ? "Valid" : "Invalid"}
+                            </span>
+                        </p>
+                        <p className="text-md mt-2 break-all">
+                            Student DID: {licenseStudentDID}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
-</div>
     );
 };
 

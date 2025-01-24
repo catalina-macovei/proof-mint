@@ -48,8 +48,8 @@ npx hardhat compile
 ```
 - Deploy the contract
 ```
-npx hardhat run scripts/deploy-contract-name.js --network sepolia
-```
+```npx hardhat run scripts/deploy-contract-name.js --network sepolia
+
 - Run the tests
 ```
 npx hardhat test
