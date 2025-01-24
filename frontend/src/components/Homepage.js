@@ -9,7 +9,7 @@ const HomePage = () => {
         autoPlay
         loop
         muted
-        className="w-1/4 max-w-md rounded-lg shadow-lg"
+        className="w-1/4 max-w-md"
       />
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
           Welcome to Licence Manager
