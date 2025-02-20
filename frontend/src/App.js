@@ -8,6 +8,8 @@ import RevokeLicense from './components/RevokeLicense';
 import CreateDID from './components/CreateDID';
 import Navbar from './components/Navbar';
 import HomePage from './components/Homepage';
+import TestVeramo from './components/TestVeramo';
+import ViewAllLicenses from './components/ViewAllLicenses';
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -63,7 +65,9 @@ function App() {
         />
         <div className="flex justify-center items-center mt-4">
           <Routes>
+            <Route path="/licenses" element={<ViewAllLicenses />} />
             <Route path="/" element={<HomePage />} />
+            <Route path="/test-veramo" element={<TestVeramo/>} />
             <Route path="/create-did" element={<CreateDID didDoc={didDoc} />} />
             <Route path="/issue-license" element={<IssueLicense account={account} />} />
             <Route path="/verify-license" element={<VerifyLicense account={account} />} />

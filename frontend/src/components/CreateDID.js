@@ -12,25 +12,24 @@ const CreateDID = () => {
   const createIdentity = async () => {
     setLoading(true);
     try {
-      const resolvedDid = await agent.resolveDid({
-        didUrl: 'did:ethr:sepolia:' + window.ethereum.selectedAddress
-      });
-      
-      const didString = resolvedDid.didDocument.id;
-      setDid(didString);
-      
-      // Convert DID string to bytes32 for smart contract
-      const didBytes = ethers.encodeBytes32String(didString.slice(0, 31));
-      
-      const registry = await getContract(IDENTITY_REGISTRY_ADDRESS, IdentityRegistry.abi);
-      const tx = await registry.createIdentity(didBytes);
-      await tx.wait();
-      
+        const resolvedDid = await agent.resolveDid({
+            didUrl: 'did:ethr:sepolia:' + window.ethereum.selectedAddress
+        });
+        
+        const didString = resolvedDid.didDocument.id;
+        setDid(didString);
+        
+        const didBytes = ethers.encodeBytes32String(didString.slice(0, 31));
+        const registry = await getContract(IDENTITY_REGISTRY_ADDRESS, IdentityRegistry.abi);
+        const tx = await registry.createIdentity(didBytes);
+        await tx.wait();
+        
     } catch (error) {
-      console.error('Error creating DID:', error);
+        console.error('Error creating DID:', error);
     }
     setLoading(false);
-  };
+};
+
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">

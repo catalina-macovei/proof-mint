@@ -13,6 +13,22 @@ const Navbar = ({ account, onConnect, loading }) => {
           <ul className="flex space-x-8 font-medium">
           <li>
               <Link
+                to="/licenses"
+                className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500"
+              >
+                all licenses
+              </Link>
+            </li>
+          <li>
+              <Link
+                to="/test-veramo"
+                className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500"
+              >
+                test veramo
+              </Link>
+            </li>
+          <li>
+              <Link
                 to="/create-did"
                 className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500"
               >

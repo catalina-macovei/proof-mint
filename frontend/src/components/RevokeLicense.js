@@ -13,7 +13,7 @@ const RevokeLicense = () => {
             setError('Please enter an IPFS CID');
             return;
         }
-
+    
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
@@ -22,11 +22,13 @@ const RevokeLicense = () => {
                 LicenseManager.abi,
                 signer
             );
-
+    
             const tx = await contract.revokeLicense(ipfsCID);
             setTxHash(tx.hash);
             
-            // Wait for transaction confirmation
+            // Revoke Veramo credential
+            await fetch(`http://localhost:8000/api/v1/revoke-license?cid=${ipfsCID}`);
+            
             const receipt = await tx.wait();
             if (receipt.status === 1) {
                 setError('');
@@ -37,6 +39,7 @@ const RevokeLicense = () => {
             setError('Error revoking license: ' + error.message);
         }
     };
+    
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">

@@ -1,5 +1,13 @@
-module.exports = {
-    babel: {
-      plugins: ['@babel/plugin-syntax-import-assertions']
-    }
-  }
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
+
+export default {
+  style: {
+    postcss: {
+      plugins: [
+        tailwindcss,
+        autoprefixer,
+      ],
+    },
+  },
+}
