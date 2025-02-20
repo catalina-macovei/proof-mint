@@ -26,13 +26,8 @@ const VerifyLicense = () => {
 
             const [isValid, studentDID] = await contract.verifyLicense(ipfsCID);
             
-            // Verify and get credential
-            const response = await fetch(`http://localhost:8000/api/v1/verify-license?cid=${ipfsCID}`);
-            const data = await response.json();
-            
             setIsLicenseValid(isValid);
             setLicenseStudentDID(studentDID);
-            setCredential(data.credential);
             setError('');
         } catch (err) {
             setError('Error verifying license: ' + err.message);

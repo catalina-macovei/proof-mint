@@ -26,9 +26,6 @@ const RevokeLicense = () => {
             const tx = await contract.revokeLicense(ipfsCID);
             setTxHash(tx.hash);
             
-            // Revoke Veramo credential
-            await fetch(`http://localhost:8000/api/v1/revoke-license?cid=${ipfsCID}`);
-            
             const receipt = await tx.wait();
             if (receipt.status === 1) {
                 setError('');

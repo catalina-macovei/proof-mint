@@ -3,7 +3,6 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
 import { CONTRACT_ADDRESS } from '../config/contract';
-import { agent } from '../veramo/setup';
 
 const IssueLicense = ({ account }) => {
   const [proof, setProof] = useState(null);
@@ -11,114 +10,62 @@ const IssueLicense = ({ account }) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const verifyDID = async (did) => {
-    try {
-      const formattedDID = did.startsWith('did:ethr:sepolia:') 
-        ? did 
-        : `did:ethr:sepolia:${did}`;
-        
-      const resolution = await agent.resolveDid({ didUrl: formattedDID });
-      return resolution.didDocument !== null;
-    } catch (error) {
-      return false;
-    }
-  };
 
   const captureFile = (event) => {
-    setProof(event.target.files[0]);
+    const selectedProof = event.target.files[0];
+    setProof(selectedProof);
+    console.log('Document selected:', selectedProof);
   };
 
   const processForm = async (event) => {
     event.preventDefault();
-    setIsSubmitting(true);
-    setMessage('');
-
-    if (!proof) {
-      setMessage('Please upload a file.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    let formattedDID = studentDID.startsWith('did:ethr:sepolia:') 
+    
+    const formattedDID = studentDID.startsWith('did:ethr:') 
       ? studentDID 
-      : `did:ethr:sepolia:${studentDID}`;
-
-    console.log('Formatted DID:', formattedDID);
-
-    // Verify the DID
-    const isValidDID = await verifyDID(formattedDID);
-    if (!isValidDID) {
-      setMessage('Invalid DID format or DID not found.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Extract Ethereum address from DID
-    let studentAddress = formattedDID.split(':').pop();
+      : `did:ethr:${studentDID}`;
+  
+    // Extract the Ethereum address from the DID string
+    const studentAddress = formattedDID.split(':').pop();
+  
     try {
-      studentAddress = ethers.getAddress(studentAddress); // Validate Ethereum address
-    } catch (error) {
-      setMessage('Invalid Ethereum address extracted from DID.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    console.log('Student Ethereum Address:', studentAddress);
-
-    try {
-      // Upload proof file to IPFS backend
       const uploadData = new FormData();
       uploadData.append('file', proof);
       uploadData.append('studentDID', formattedDID);
-
+  
       const result = await axios.post('http://localhost:8000/api/v1/proof', uploadData);
-      console.log('IPFS Response:', result.data);
-      
-      const cidString = typeof result.data.cid === 'object' ? result.data.cid['/'] || JSON.stringify(result.data.cid) : result.data.cid;
-      console.log('Extracted CID:', cidString);
-      
-
-      console.log('IPFS CID:', cidString);
-
-      if (!window.ethereum) {
-        setMessage('Please install MetaMask.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-
+  
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, LicenseManager.abi, signer);
-
-      console.log('Sending transaction...');
-      const tx = await contract.issueLicense(cidString, studentAddress);
-      console.log('Transaction submitted. Hash:', tx.hash);
-
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        LicenseManager.abi,
+        signer
+      );
+  
+      // Pass the IPFS hash and the extracted Ethereum address
+      const tx = await contract.issueLicense(
+        result.data.ipfsHash,
+        studentAddress // Now passing just the Ethereum address
+      );
+      
       setMessage('Transaction submitted. Waiting for confirmation...');
-
       const receipt = await tx.wait();
-      console.log('Transaction receipt:', receipt);
-
+      
       if (receipt.status === 1) {
-        setMessage(`License issued successfully! Tx: ${receipt.hash}`);
-      } else {
-        setMessage('Transaction failed.');
+        setMessage('License issued successfully! Transaction hash: ' + receipt.hash);
       }
     } catch (error) {
       console.error('Error:', error);
-      setMessage(error.reason || error.message);
+      setMessage(error.message);
     }
     setIsSubmitting(false);
   };
+  
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
       <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
-        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
-          Issue License
-        </h2>
+        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Issue License</h2>
         
         <form onSubmit={processForm} className="space-y-4">
           <div>
@@ -159,3 +106,6 @@ const IssueLicense = ({ account }) => {
 };
 
 export default IssueLicense;
+
+// did:ethr:0xe83f39161c51b68ecc5edc09fe8c5fcb0359fed7
+// Your DID: did:ethr:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1

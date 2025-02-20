@@ -1,190 +1,176 @@
 import express from 'express';
 import multer from 'multer';
-import { Blob } from 'buffer';
+import { Blob } from 'buffer'; 
 import cors from 'cors';
 import dotenv from 'dotenv';
 import W3client from './w3client.js';
 import { ethers } from 'ethers';
-import { createVeramoAgent } from './veramo/setup.js'
+import { createRequire } from 'module';
 
-// Initialize the agent before setting up routes
-const agent = await createVeramoAgent()
+const require = createRequire(import.meta.url);
+const LicenseManager = require('../artifacts/contracts/LicenseManager.sol/LicenseManager.json');
 
 dotenv.config();
 
-// Dynamically import the LicenseManager contract JSON using native ESM:
-const LicenseManagerModule = await import(
-  '../artifacts/contracts/LicenseManager.sol/LicenseManager.json',
-  { assert: { type: 'json' } }
-);
-const LicenseManager = LicenseManagerModule.default;
-
 console.log('Environment variables loaded:', {
-  hasRpcUrl: !!process.env.SEPOLIA_RPC_URL,
-  hasPrivateKey: !!process.env.PRIVATE_KEY,
-  hasContractAddress: !!process.env.CONTRACT_ADDRESS,
+    hasRpcUrl: !!process.env.SEPOLIA_RPC_URL,
+    hasPrivateKey: !!process.env.PRIVATE_KEY,
+    hasContractAddress: !!process.env.CONTRACT_ADDRESS
 });
 
+// Initialize contract with explicit values
 const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
-const privateKey = process.env.PRIVATE_KEY.startsWith('0x')
-  ? process.env.PRIVATE_KEY
-  : `0x${process.env.PRIVATE_KEY}`;
+const privateKey = process.env.PRIVATE_KEY.startsWith('0x') 
+    ? process.env.PRIVATE_KEY 
+    : `0x${process.env.PRIVATE_KEY}`;
+
 const signer = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(
-  process.env.CONTRACT_ADDRESS,
-  LicenseManager.abi,
-  signer
+    process.env.CONTRACT_ADDRESS,
+    LicenseManager.abi,
+    signer
 );
 
 const application = express();
 const port = 8000;
 
-// Global middleware: CORS and JSON parser.
-application.use(cors());
-application.use(express.json());
-
-// Initialize your web3 client.
-const w2client = new W3client();
+const w2client = new W3client();  
 await w2client.init();
 
-// Configure multer with the correct option name "storage".
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+application.use(cors());
+
+const blobStorage = multer.memoryStorage();
+const upload = multer({ blobStorage });
+
+const testAddress = "0x742e642c45a0f10159e4f3d46c2468dc85e9d706"; // student DID
+
+// application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
+//     if (!req.file) {
+//         return res.status(400).json({ message: 'No file uploaded' });
+//     }
+
+//     try {
+//         const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
+//         const uploadOptions = {}; 
+//         const cid = await w2client.client.uploadFile(fileBlob, uploadOptions);
+        
+//         const studentDID = req.body.studentDID.split(':')[2]; // Extract address from DID
+//         const tx = await contract.issueLicense(cid, studentDID);
+//         const receipt = await tx.wait();
+
+//         console.log('File uploaded and license issued -> CID:', cid, 'TX:', receipt.transactionHash);
+        
+//         res.status(200).json({
+//             message: 'Success',
+//             cid: cid,
+//             transactionHash: receipt.transactionHash
+//         });
+//     } catch (error) {
+//         console.error('Error:', error);
+//         res.status(500).json({ message: 'Error processing request' });
+//     }
+// });
 
 
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY);
-const issuerDid = `did:ethr:sepolia:${wallet.getAddress()}`;
-
-
-// Route: Issue a proof credential.
 application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
-  try {
-    const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
-    const cid = await w2client.client.uploadFile(fileBlob);
-
-    const credential = await agent.createVerifiableCredential({
-        credential: {
-          '@context': ['https://www.w3.org/2018/credentials/v1'],
-          type: ['VerifiableCredential', 'ProofMintCertificate'],
-          issuer: { id: issuerDid },
-          issuanceDate: new Date().toISOString(),
-          credentialSubject: {
-            id: cid,
-            type: 'License',
-          },
-        },
-        proofFormat: 'jwt'
-      })
-      
-
-    res.json({ cid, credential });
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({
-      error: error.message,
-      details: 'Error processing credential issuance',
-    });
-  }
-});
-
-// Route: Revoke license (issue revocation credential).
-application.get('/api/v1/revoke-license', async (req, res) => {
-  const { cid } = req.query;
-  if (!cid) {
-    return res.status(400).send('Missing required parameter: CID');
-  }
-  try {
-    const revokedCredential = await agent.createVerifiableCredential({
-      credential: {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiableCredential', 'CredentialStatusList2017'],
-        issuer: issuerDid,
-        issuanceDate: new Date().toISOString(),
-        credentialSubject: {
-          id: cid,
-          type: 'RevocationList2017',
-          status: 'revoked',
-        },
-      },
-    });
-    res.json({
-      success: true,
-      message: 'Credential revoked',
-      revokedCredential,
-    });
-  } catch (error) {
-    console.error('Veramo: Error revoking credential:', error);
-    res.status(500).send('Error revoking credential');
-  }
-});
-
-application.get('/api/v1/verify-license', async (req, res) => {
-    const { cid } = req.query
-    if (!cid) {
-      return res.status(400).send('Missing required parameter: CID')
-    }
     try {
-      const identifiers = await agent.didManagerFind()
-      if (identifiers.length === 0) {
-        throw new Error('No DIDs found - please ensure agent is properly initialized')
-      }
-      
-      const issuerDid = identifiers[0].did
-      const credential = await agent.createVerifiableCredential({
-        credential: {
-          '@context': ['https://www.w3.org/2018/credentials/v1'],
-          type: ['VerifiableCredential', 'ProofMintCertificate'],
-          issuer: { id: issuerDid },
-          issuanceDate: new Date().toISOString(),
-          credentialSubject: {
-            id: cid,
-            type: 'License',
-          },
-        },
-        proofFormat: 'jwt'
-      })
-      
-      res.json({ success: true, credential })
-    } catch (error) {
-      console.error('Error retrieving credential:', error)
-      res.status(500).send('Error retrieving credential')
-    }
-  })
-  
+        const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
+        const uploadOptions = {};
+        const cid = await w2client.client.uploadFile(fileBlob, uploadOptions);
+        const cidString = cid.toString();
 
-// Route: Test credentials creation & presentation.
-application.post('/api/v1/test-credentials', async (req, res) => {
-  try {
-    const credential = await agent.createVerifiableCredential({
-      credential: {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiableCredential', 'ProofMintCertificate'],
-        issuer: issuerDid,
-        issuanceDate: new Date().toISOString(),
-        credentialSubject: {
-          id: 'did:ethr:sepolia:0x123',
-          achievement: 'Test Certificate',
-          course: 'Blockchain Development',
-        },
-      },
-    });
-    const presentation = await agent.createVerifiablePresentation({
-      presentation: {
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiablePresentation'],
-        holder: issuerDid,
-        verifiableCredential: [credential],
-      },
-      challenge: 'test-challenge',
-      domain: 'proofmint.com',
-    });
-    res.json({ credential, presentation });
-  } catch (error) {
-    console.error('Credential creation error:', error);
-    res.status(500).json({ error: error.message });
-  }
+        console.log('File uploaded to IPFS -> CID:', cidString);
+
+        res.status(200).json({
+            message: 'Success',
+            ipfsHash: cidString
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Error processing request' });
+    }
 });
+
+
+
+
+// Route to revoke a license
+application.use(express.json());
+
+
+application.get('/api/v1/revoke-license', async (req, res) => {
+    const { studentDID } = req.query;
+
+    if (!studentDID) {
+        console.log('Missing required parameter: studentDID');
+        return res.status(400).send('Missing required parameter: studentDID');
+    }
+
+    try {
+        // Fetch the CID for the studentDID 
+        const cid = await fetchCIDForStudent(studentDID); 
+        if (!cid) {
+            console.log('CID not found for studentDID:', studentDID);
+            return res.status(404).send('CID not found for student');
+        }
+
+        console.log('CID to revoke:', cid);
+
+        // Call the revokeLicense function on the contract
+        const tx = await contract.revokeLicense(cid);
+
+        // Optionally, wait for the transaction to be mined 
+        // const receipt = await tx.wait();
+
+        console.log('License revoked -> CID:', cid, 'TX:', tx.hash);
+        
+        res.json({
+            success: true,
+            message: 'License revocation initiated',
+            transactionHash: tx.hash
+        });
+    } catch (error) {
+        console.error('Error revoking license:', error);
+        res.status(500).send('Error revoking license');
+    }
+});
+
+// Example function to fetch CID based on studentDID 
+async function fetchCIDForStudent(studentDID) {
+    //mock CID fetching logic
+    const mockDatabase = {
+        "student123": "bafkreihnz3bvpnojbhilcab2mv7zsfdr4pci5nlvab3pz76nfz4g3k6ne4",  //test CID
+    };
+
+    return mockDatabase[studentDID]; 
+}
+
+
+
+
+// Route to verify a license
+application.get('/api/v1/verify-license', async (req, res) => {
+    const { studentDID } = req.query;
+
+    if (!studentDID) {
+        console.log('Missing required parameter: studentDID');
+        return res.status(400).send('Missing required parameter: studentDID');
+    }
+
+    try {
+        const cid = "bafkreihnz3bvpnojbhilcab2mv7zsfdr4pci5nlvab3pz76nfz4g3k6ne4";  //test cid
+        console.log('Verifying license with CID:', cid);
+
+        const [isValid, licenseStudentDID] = await contract.verifyLicense(cid);
+        console.log('License is valid:', isValid, 'for Student DID:', licenseStudentDID);
+        res.json({ success: true, isValid, licenseStudentDID });
+    } catch (error) {
+        console.error('Error verifying license:', error);
+        res.status(500).send('Error verifying license');
+    }
+});
+
 
 application.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running on http://localhost:${port}`);
 });
