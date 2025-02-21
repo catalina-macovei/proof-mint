@@ -2,7 +2,9 @@
 import { createAgent } from '@veramo/core';
 import { DIDManager } from '@veramo/did-manager';
 import { KeyManager } from '@veramo/key-manager';
-import { KeyStore } from '@veramo/data-store';
+import { InMemoryKeyStore } from './inMemoryKeyStore';
+// Updated DID store:
+import { InMemoryDIDStore } from './inMemoryDIDStore';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { DIDResolverPlugin } from '@veramo/did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
@@ -21,28 +23,29 @@ const getWeb3Provider = () => {
   }
 };
 
-// Setup an in-memory KeyStore and KMS
-const secretKey = 'my-secret-key'; // In production, use a secure, unpredictable key.
-const keyStore = new KeyStore();
+const secretKey = 'my-secret-key'; // Use environment variables in production
+
+const keyStore = new InMemoryKeyStore();
+const didStore = new InMemoryDIDStore();
+
 const kmsLocal = new KeyManagementSystem(keyStore, new SecretBox(secretKey));
 
 const agent = createAgent({
   plugins: [
     new KeyManager({
       store: keyStore,
-      kms: {
-        local: kmsLocal,
-      },
+      kms: { local: kmsLocal },
     }),
     new DIDManager({
+      store: didStore,
+      defaultProvider: 'did:ethr',
       providers: {
         'did:ethr': new EthrDIDProvider({
           defaultKms: 'local',
-          network: 'sepolia', // Using the Sepolia test network
+          network: 'sepolia',
           rpcUrl: `https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`,
         }),
       },
-      defaultProvider: 'did:ethr',
     }),
     new DIDResolverPlugin({
       resolver: new Resolver({
