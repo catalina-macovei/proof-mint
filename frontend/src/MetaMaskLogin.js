@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { formatEther, verifyMessage } from 'ethers';
-import { getWeb3Provider, agent } from './veramo/setup.js';
+import { getWeb3Provider, agent, verifySepoliaDID} from './veramo/setup.js';
 import {
   FaWallet,
   FaKey,
@@ -10,6 +10,8 @@ import {
   FaEthereum,
   FaFileSignature,
 } from 'react-icons/fa';
+import 'cross-fetch/polyfill'
+
 
 const MetaMaskLogin = ({ onLogin }) => {
   const [walletAddress, setWalletAddress] = useState(null);
@@ -47,19 +49,28 @@ const MetaMaskLogin = ({ onLogin }) => {
       const address = await signer.getAddress();
       console.log('Connected address:', address);
 
-      // Create or retrieve DID using Veramo
-      const identifier = await agent.didManagerCreate({
-        provider: 'did:ethr',
-        alias: address,
-      });
+
+      // Derive the expected DID
+      const expectedDID = `did:ethr:sepolia:${address}`;
+      console.log('Expected DID:', expectedDID);
+
+      const isValid = await verifySepoliaDID(expectedDID);
+    
+      console.log('DID Verification Result:', isValid);
+      if (isValid.success) {
+        setDid(expectedDID);
+        sessionStorage.setItem('did', expectedDID);
+      } else {
+        console.error('Failed to verify DID on Sepolia network');
+      }
 
       setWalletAddress(address);
       sessionStorage.setItem('walletAddress', address);
 
-      setDid(identifier.did);
-      sessionStorage.setItem('did', identifier.did);
+      setDid( expectedDID);
+      sessionStorage.setItem('did', expectedDID);
 
-      onLogin?.(address, identifier.did);
+      onLogin?.(address,  expectedDID);
       fetchBalance(address);
     } catch (error) {
       console.error('MetaMask connection failed:', error);

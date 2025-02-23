@@ -11,6 +11,8 @@ import ViewAllLicenses from './components/ViewAllLicenses';
 import MetaMaskLogin from './MetaMaskLogin';
 import LicenseServices from './components/LicenseServices';
 import FAQ from './components/FAQ';
+import 'cross-fetch/polyfill'
+
 
 const App = () => {
   const [account, setAccount] = useState(null);

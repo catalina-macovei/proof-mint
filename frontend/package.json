@@ -29,6 +29,7 @@
     "buffer": "^6.0.3",
     "cross-fetch": "^4.1.0",
     "crypto-browserify": "^3.12.1",
+    "did-resolver": "^4.1.0",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "ethr-did-resolver": "^11.0.3",
