@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { formatEther, verifyMessage } from 'ethers';
-import { getWeb3Provider, agent, verifySepoliaDID} from './veramo/setup.js';
+import {   
+  agent,
+  getWeb3Provider,
+  verifySepoliaDID,
+  issueDiplomaVC,
+  verifySignature,
+  generateOrganizationKey,
+  createOrganizationDID,
+  createEthrDID
+} from './veramo/setup.js';
 import {
   FaWallet,
   FaKey,
@@ -10,20 +19,15 @@ import {
   FaEthereum,
   FaFileSignature,
 } from 'react-icons/fa';
-import 'cross-fetch/polyfill'
-
+import 'cross-fetch/polyfill';
 
 const MetaMaskLogin = ({ onLogin }) => {
   const [walletAddress, setWalletAddress] = useState(null);
   const [did, setDid] = useState(null);
-
   const [message, setMessage] = useState('Hello, Veramo!');
   const [signedMessage, setSignedMessage] = useState(null);
   const [verified, setVerified] = useState(null);
-
   const [balance, setBalance] = useState(null);
-
-  // State for Verifiable Credentials
   const [issuedVC, setIssuedVC] = useState(null);
   const [vcVerified, setVcVerified] = useState(null);
 
@@ -37,6 +41,19 @@ const MetaMaskLogin = ({ onLogin }) => {
     }
   }, []);
 
+  async function handleIssueDiploma(studentDID, organizationDID) {
+    try {
+      const result = await issueDiplomaVC(studentDID, organizationDID);
+      if (result.success) {
+        console.log('VC Issued:', result.verifiableCredential);
+      } else {
+        console.error('VC Issuance Error:', result.error);
+      }
+    } catch (error) {
+      console.error('Error calling issueDiplomaVC:', error);
+    }
+  }
+
   const connectWallet = async () => {
     try {
       if (typeof window.ethereum === 'undefined') {
@@ -45,32 +62,33 @@ const MetaMaskLogin = ({ onLogin }) => {
       const provider = getWeb3Provider();
       await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-      const signer = provider.getSigner();
+      // Use ethers v6 to get signer and address
+      const signer = await provider.getSigner();
       const address = await signer.getAddress();
       console.log('Connected address:', address);
 
+      const ethrDidObj = await createEthrDID(address);  // Create the ETHR DID
 
-      // Derive the expected DID
-      const expectedDID = `did:ethr:sepolia:${address}`;
-      console.log('Expected DID:', expectedDID);
+      const orgKey = await generateOrganizationKey();
+      const orgDid = await createOrganizationDID(orgKey);
 
-      const isValid = await verifySepoliaDID(expectedDID);
-    
+
+      // Verify the created Ethr DID on Sepolia
+      const isValid = await verifySepoliaDID(ethrDidObj.did);
       console.log('DID Verification Result:', isValid);
+
       if (isValid.success) {
-        setDid(expectedDID);
-        sessionStorage.setItem('did', expectedDID);
+        setDid(ethrDidObj.did);
+        sessionStorage.setItem('did', ethrDidObj.did);
+        // Issue diploma VC using Ethr DID for both student & organization (adjust as needed)
+        await issueDiplomaVC(ethrDidObj.did, ethrDidObj.controllerKeyId);
+        onLogin?.(address, ethrDidObj.did);
       } else {
         console.error('Failed to verify DID on Sepolia network');
       }
 
       setWalletAddress(address);
       sessionStorage.setItem('walletAddress', address);
-
-      setDid( expectedDID);
-      sessionStorage.setItem('did', expectedDID);
-
-      onLogin?.(address,  expectedDID);
       fetchBalance(address);
     } catch (error) {
       console.error('MetaMask connection failed:', error);
@@ -88,9 +106,6 @@ const MetaMaskLogin = ({ onLogin }) => {
     }
   };
 
-  /** --------------------------
-   *  SIGN & VERIFY MESSAGE
-   * ---------------------------*/
   const signMessage = async () => {
     if (!walletAddress) return;
     try {
@@ -108,37 +123,29 @@ const MetaMaskLogin = ({ onLogin }) => {
     if (!signedMessage) return;
     try {
       const recoveredAddress = verifyMessage(message, signedMessage);
-      setVerified(recoveredAddress === walletAddress);
+      setVerified(recoveredAddress.toLowerCase() === walletAddress.toLowerCase());
     } catch (error) {
       console.error('Verification failed:', error);
       setVerified(false);
     }
   };
 
-  /** --------------------------
-   *  ISSUE & VERIFY CREDENTIAL
-   * ---------------------------*/
   const issueCredential = async () => {
     if (!did) return;
     try {
-      // Create a simple Verifiable Credential (VC) with Veramo
-      // You can customize the subject, context, issuanceDate, etc.
       const vc = await agent.createVerifiableCredential({
         credential: {
           issuer: { id: did },
-          // This is the W3C standard type array for a credential
           type: ['VerifiableCredential', 'ExampleCredential'],
           issuanceDate: new Date().toISOString(),
           credentialSubject: {
-            // Subject could be the same DID or another DID
             id: did,
             name: 'Alice',
             role: 'Demo User',
           },
         },
-        proofFormat: 'jwt', // or 'lds' for JSON-LD Signatures
+        proofFormat: 'jwt',
       });
-
       setIssuedVC(vc);
       setVcVerified(null);
       console.log('Issued VC:', vc);
@@ -166,7 +173,6 @@ const MetaMaskLogin = ({ onLogin }) => {
         MetaMask Authentication
       </h2>
 
-      {/* If wallet not connected, show the Connect button */}
       {!walletAddress ? (
         <button
           onClick={connectWallet}
@@ -177,7 +183,6 @@ const MetaMaskLogin = ({ onLogin }) => {
         </button>
       ) : (
         <>
-          {/* Wallet Info Card */}
           <div className="bg-gray-50 p-4 rounded-lg shadow w-full space-y-2">
             <div className="flex items-center flex-wrap">
               <FaWallet className="mr-2 text-blue-600" />
@@ -198,7 +203,6 @@ const MetaMaskLogin = ({ onLogin }) => {
             )}
           </div>
 
-          {/* Signing & Verification Card */}
           <div className="bg-gray-50 p-4 rounded-lg shadow w-full space-y-4">
             <div>
               <label className="font-semibold block mb-1">Message to Sign</label>
@@ -253,7 +257,6 @@ const MetaMaskLogin = ({ onLogin }) => {
             )}
           </div>
 
-          {/* Issue & Verify Verifiable Credential Card */}
           <div className="bg-gray-50 p-4 rounded-lg shadow w-full space-y-4">
             <h3 className="font-semibold text-lg flex items-center">
               <FaFileSignature className="mr-2 text-blue-600" />
