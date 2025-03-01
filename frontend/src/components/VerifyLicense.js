@@ -7,6 +7,7 @@ const VerifyLicense = () => {
     const [ipfsCID, setIpfsCID] = useState('');
     const [isLicenseValid, setIsLicenseValid] = useState(null);
     const [licenseStudentDID, setLicenseStudentDID] = useState('');
+    const [credential, setCredential] = useState(null);
     const [error, setError] = useState('');
 
     const handleVerify = async () => {
@@ -36,28 +37,28 @@ const VerifyLicense = () => {
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
-            <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
-                <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Verify License</h2>
+            <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
+                <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
+                    Verify License
+                </h2>
 
                 <input
                     type="text"
                     placeholder="Enter IPFS CID"
                     value={ipfsCID}
                     onChange={(e) => setIpfsCID(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full p-3 border border-gray-300 rounded-lg mb-4"
                 />
 
                 <button
                     onClick={handleVerify}
-                    className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+                    className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
                     Verify License
                 </button>
 
                 {error && (
-                    <p className="mt-4 text-red-500 font-medium">
-                        {error}
-                    </p>
+                    <p className="mt-4 text-red-500 font-medium">{error}</p>
                 )}
 
                 {isLicenseValid !== null && (
@@ -72,9 +73,19 @@ const VerifyLicense = () => {
                         </p>
                     </div>
                 )}
+
+                {credential && (
+                    <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <h3 className="text-lg font-medium mb-2">Verifiable Credential:</h3>
+                        <pre className="overflow-auto text-sm">
+                            {JSON.stringify(credential, null, 2)}
+                        </pre>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
+
 
 export default VerifyLicense;

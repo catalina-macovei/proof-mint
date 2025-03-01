@@ -61,6 +61,8 @@ npx hardhat test
 #### The workflow of the app:
 ![Workflow Diagram](frontend/public/images/image.png)
 
+#### SSI concept diagram:
+![SSI Diagram](frontend/public/images/ssi-diagram.png)
 
 ## Authors
 - Macovei Catalina 

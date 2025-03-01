@@ -3,7 +3,6 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
 import { CONTRACT_ADDRESS } from '../config/contract';
-import { agent } from '../veramo/setup';
 
 const IssueLicense = ({ account }) => {
   const [proof, setProof] = useState(null);
@@ -11,18 +10,6 @@ const IssueLicense = ({ account }) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const verifyDID = async (did) => {
-    try {
-      const formattedDID = did.startsWith('did:ethr:sepolia:') 
-        ? did 
-        : `did:ethr:sepolia:${did}`;
-        
-      const resolution = await agent.resolveDid({ didUrl: formattedDID });
-      return resolution.didDocument !== null;
-    } catch (error) {
-      return false;
-    }
-  };
 
   const captureFile = (event) => {
     const selectedProof = event.target.files[0];
@@ -33,9 +20,9 @@ const IssueLicense = ({ account }) => {
   const processForm = async (event) => {
     event.preventDefault();
     
-    const formattedDID = studentDID.startsWith('did:ethr:sepolia:') 
+    const formattedDID = studentDID.startsWith('did:ethr:') 
       ? studentDID 
-      : `did:ethr:sepolia:${studentDID}`;
+      : `did:ethr:${studentDID}`;
   
     // Extract the Ethereum address from the DID string
     const studentAddress = formattedDID.split(':').pop();
@@ -120,5 +107,5 @@ const IssueLicense = ({ account }) => {
 
 export default IssueLicense;
 
-// did:ethr:sepolia:0xe83f39161c51b68ecc5edc09fe8c5fcb0359fed7
-// Your DID: did:ethr:sepolia:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1
+// did:ethr:0xe83f39161c51b68ecc5edc09fe8c5fcb0359fed7
+// Your DID: did:ethr:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1
