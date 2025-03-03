@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@craco/craco": "^7.1.0",
+    "@ethereum-attestation-service/eas-sdk": "github:ethereum-attestation-service/eas-sdk",
     "@veramo/core": "^6.0.0",
     "@veramo/credential-w3c": "^6.0.0",
     "@veramo/data-store": "^6.0.0",
