@@ -25,10 +25,25 @@ A blockchain app for decentralized certificate verification.
 ```
 npm install
 ```
-- Make sure to change .env variables
+- Make sure to change .env variables. Look into .env.example for reference.
 ```
+# EAS
+EAS_CONTRACT_ADDRESS=
+EAS_SCHEMA_UID=
+EAS_SCHEMA_REGISTRY_ADDRESS=
+
+# CUSTOM CONTRACTS
+LICENSE_RESOLVER_CONTRACT_ADDRESS=
+
+# SEPOLIA
+SEPOLIA_RPC_URL=
 INFURA_API_KEY=
+
+# WALLET
+EAS_ATTESTATION_RECIPIENT=
 PRIVATE_KEY=
+
+# WEB3 STORAGE 
 KEY=
 PROOF=
 ```

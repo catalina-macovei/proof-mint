@@ -3,17 +3,17 @@ const { ethers } = require("ethers");
 const { SchemaRegistry } = require("@ethereum-attestation-service/eas-sdk");
 
 async function registerSchema() {
-  const provider = new ethers.JsonRpcProvider("https://sepolia.infura.io/v3/" + process.env.INFURA_API_KEY);
+  const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   
-  // Correct Schema Registry Address for Sepolia
-  const SCHEMA_REGISTRY_ADDRESS = "0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0";
+  // Schema Registry Address for Sepolia
+  const SCHEMA_REGISTRY_ADDRESS = process.env.EAS_SCHEMA_REGISTRY_ADDRESS;
   
   const schemaRegistry = new SchemaRegistry(SCHEMA_REGISTRY_ADDRESS);
   const connectedSchemaRegistry = schemaRegistry.connect(wallet);
 
   const schemaDefinition = "string studentDID,string studentName,uint256 graduationYear,string degree,string issuanceDate,string CID";
-  const resolverAddress = "0x0000000000000000000000000000000000000000";
+  const resolverAddress = process.env.LICENSE_RESOLVER_CONTRACT_ADDRESS;
   
   console.log("Registering schema...");
   const transaction = await connectedSchemaRegistry.register({
