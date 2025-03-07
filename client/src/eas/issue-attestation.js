@@ -22,16 +22,19 @@ const checkBalance = async (provider, wallet) => {
 const encodeAttestationData = (data) => {
   const schemaString = "string universityDID,string studentDID,string studentName,uint256 graduationYear,string degree,string issuanceDate,string CID";
   const schemaEncoder = new SchemaEncoder(schemaString);
+
   return schemaEncoder.encodeData(data);
 };
 
 export const issueAttestation = async (attestationData) => {
   try {
+    console.log("Starting attestation process...", attestationData);
     const { provider, wallet } = setupWallet();
-    if (!(await checkBalance(provider, wallet))) return;
 
     const eas = new EAS(EAS_CONTRACT_ADDRESS).connect(wallet);
     const encodedData = encodeAttestationData(attestationData);
+    console.log("endc", encodedData);
+    
 
     try {
       const tx = await eas.attest({

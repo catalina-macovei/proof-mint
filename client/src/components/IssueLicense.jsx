@@ -36,9 +36,15 @@ const IssueLicense = ({ account }) => {
       // Upload the file and metadata to your server
       const result = await axios.post('http://localhost:8000/api/v1/proof', uploadData);
 
+      console.log('File uploaded successfully:', result);
+      
+
       // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+console.log("contact address", CONTRACT_ADDRESS,
+  LicenseManager.abi,
+  signer);
 
       // Connect to your LicenseManager contract using the signer
       const contract = new ethers.Contract(
@@ -47,11 +53,17 @@ const IssueLicense = ({ account }) => {
         signer
       );
 
+      console.log('Contract connected:', contract);
+
+      console.log('calling args:', result.data.ipfsHash.trim(),
+      studentAddress.trim());
+      
       // Call the contract to issue the license
       const tx = await contract.issueLicense(
-        result.data.ipfsHash,
-        studentAddress
+        result.data.ipfsHash.trim(),
+        studentAddress.trim()
       );
+
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();
 
@@ -59,16 +71,17 @@ const IssueLicense = ({ account }) => {
         // Define a values object for your attestation.
         // You can customize this object based on your application's needs.
         const values = [
-          { type: "string", name: "name", value: "Alice Johnson" },
-          { type: "uint256", name: "age", value: 28 },
-          { type: "bool", name: "isStudent", value: false },
-          { type: "address", name: "wallet", value: studentAddress },
-          { type: "bytes32", name: "dataHash", value: ethers.id("confidential information") },
+          { name: "universityDID", value: "did:ethr:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1", type: "string" }, 
+          { name: "studentDID", value: "did:ethr:0xe83F39161C51B68ecC5eDC09Fe8C5FCb0359FED7", type: "string" },
+          { name: "studentName", value: "Test Name", type: "string" },
+          { name: "graduationYear", value: 2024, type: "uint256" },
+          { name: "degree", value: "Test Degree", type: "string" },
+          { name: "issuanceDate", value: "2024-01-01", type: "string" },
+          { name: "CID", value: "QmTestCID", type: "string" },
         ];
 
         // Create the EAS attestation using the same signer and the values object
-        // const attestationUID = await issueAttestation(values);
-        const attestationUID = "1234567890"; // Replace with the actual attestation UID
+        const attestationUID = await issueAttestation(values);
         setMessage({
           type: 'success',
           text: `License issued successfully! Attestation UID: ${attestationUID}`,

@@ -25,7 +25,7 @@ const MetaMaskLogin = ({ onLogin }) => {
       throw new Error('MetaMask not installed');
     }
   };
-  
+
 
   const connectWallet = async () => {
     try {
@@ -34,7 +34,6 @@ const MetaMaskLogin = ({ onLogin }) => {
       }
       const provider = getWeb3Provider();
       await window.ethereum.request({ method: 'eth_requestAccounts' });
-      console.log(require('@metamask/abi-utils').version);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       console.log('Connected address:', address);

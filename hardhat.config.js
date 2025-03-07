@@ -14,6 +14,6 @@ module.exports = {
     apiKey: process.env.ETHERSCAN_API_KEY
   },
   paths: {
-    artifacts: "./frontend/src/artifacts",
+    artifacts: "./client/src/artifacts",
 }
 };
