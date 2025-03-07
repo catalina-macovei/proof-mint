@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router'; 
 import { FaFileAlt, FaPlusCircle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const LicenseServices = () => {
@@ -9,7 +9,7 @@ const LicenseServices = () => {
         License Services
       </h2>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2 justify-items-center">
-        <Link
+        <NavLink
           to="/licenses"
           className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg shadow hover:bg-blue-50 dark:bg-gray-800 dark:border-gray-700 w-full max-w-sm"
         >
@@ -17,8 +17,8 @@ const LicenseServices = () => {
           <span className="text-gray-900 dark:text-white text-xl font-semibold mt-4">
             All Licenses
           </span>
-        </Link>
-        <Link
+        </NavLink>
+        <NavLink
           to="/issue-license"
           className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg shadow hover:bg-blue-50 dark:bg-gray-800 dark:border-gray-700 w-full max-w-sm"
         >
@@ -26,8 +26,8 @@ const LicenseServices = () => {
           <span className="text-gray-900 dark:text-white text-xl font-semibold mt-4">
             Issue License
           </span>
-        </Link>
-        <Link
+        </NavLink>
+        <NavLink
           to="/verify-license"
           className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg shadow hover:bg-blue-50 dark:bg-gray-800 dark:border-gray-700 w-full max-w-sm"
         >
@@ -35,8 +35,8 @@ const LicenseServices = () => {
           <span className="text-gray-900 dark:text-white text-xl font-semibold mt-4">
             Verify License
           </span>
-        </Link>
-        <Link
+        </NavLink>
+        <NavLink
           to="/revoke-license"
           className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg shadow hover:bg-blue-50 dark:bg-gray-800 dark:border-gray-700 w-full max-w-sm"
         >
@@ -44,7 +44,7 @@ const LicenseServices = () => {
           <span className="text-gray-900 dark:text-white text-xl font-semibold mt-4">
             Revoke License
           </span>
-        </Link>
+        </NavLink>
       </div>
     </div>
   );
