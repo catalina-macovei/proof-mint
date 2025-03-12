@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
 import { CONTRACT_ADDRESS } from '../config/contract';
+import {Link } from 'react-router';
+
 
 const ViewAllLicenses = () => {
     const [licenses, setLicenses] = useState([]);
@@ -41,17 +43,23 @@ const ViewAllLicenses = () => {
                 ) : (
                     <div className="space-y-4">
                         {licenses.map((license, index) => (
-                            <div key={index} className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    CID: {license.ipfsCID}
-                                </p>
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    Student DID: {license.studentDID}
-                                </p>
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    Status: {license.isValid ? 'Valid' : 'Revoked'}
-                                </p>
-                            </div>
+                            <Link to={`/license/${license.ipfsCID}`} key={index}>
+
+                                <div key={index} className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                        CID: {license.ipfsCID}
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                        Student DID: {license.studentDID}
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                        Status: {license.isValid ? 'Valid' : 'Revoked'}
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                        EAS certificate: {license.easUID}
+                                    </p>
+                                </div>
+                            </Link>
                         ))}
                     </div>
                 )}

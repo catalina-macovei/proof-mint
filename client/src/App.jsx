@@ -10,6 +10,8 @@ import RevokeLicense from './components/RevokeLicense';
 import ViewAllLicenses from './components/ViewAllLicenses';
 import LicenseServices from './components/LicenseServices';
 import VerifyLicense from './components/VerifyLicense';
+import LicenseDetails from './components/LicenseDetails';
+
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -51,7 +53,7 @@ function App() {
                         <Route path="/licenses" element={account ? <ViewAllLicenses /> : <Navigate to="/login" />} />
                         <Route path="/verify-license" element={account ? <VerifyLicense account={account} /> : <Navigate to="/login" />} />
                         <Route path="/license-services" element={<LicenseServices/>} />
-
+                        <Route path="/license/:ipfsCID" element={<LicenseDetails />} />
                     </Routes>
 
                 </div>

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 contract LicenseManager {
     struct License {
         string ipfsCID;
+        string easUID;    
         address studentDID;
         bool isValid;
         uint256 timestamp;
@@ -14,7 +15,7 @@ contract LicenseManager {
     mapping(address => bool) public isIssuer;
     string[] public licenseCIDs;
 
-    event LicenseIssued(string ipfsCID, address studentDID);
+    event LicenseIssued(string ipfsCID, string easUID, address studentDID);
     event LicenseRevoked(string ipfsCID, address studentDID);
     event IssuerAdded(address issuer);
     event IssuerRemoved(address issuer);
@@ -40,17 +41,18 @@ contract LicenseManager {
         emit IssuerRemoved(_issuer);
     }
 
-    function issueLicense(string memory _ipfsCID, address _studentDID) external onlyIssuer {
+    function issueLicense(string memory _ipfsCID, string memory _easUID, address _studentDID) external onlyIssuer {
         require(bytes(_ipfsCID).length > 0, "Invalid IPFS CID");
+        require(bytes(_easUID).length > 0, "Invalid EAS UID");
         require(_studentDID != address(0), "Invalid student DID");
         require(licenses[_ipfsCID].studentDID == address(0), "License already exists");
         require(bytes(didToCID[_studentDID]).length == 0, "DID already has a license");
 
-        licenses[_ipfsCID] = License(_ipfsCID, _studentDID, true, block.timestamp);
+        licenses[_ipfsCID] = License(_ipfsCID, _easUID, _studentDID, true, block.timestamp);
         didToCID[_studentDID] = _ipfsCID;
         licenseCIDs.push(_ipfsCID);
 
-        emit LicenseIssued(_ipfsCID, _studentDID);
+        emit LicenseIssued(_ipfsCID, _easUID, _studentDID);
     }
 
     function revokeLicense(string memory _ipfsCID) external onlyIssuer {
@@ -81,19 +83,19 @@ contract LicenseManager {
     }
 
     function getLicenseDetails(string memory _ipfsCID) external view returns (
-        string memory, address, bool, uint256
+        string memory, string memory, address, bool, uint256
     ) {
         License memory license = licenses[_ipfsCID];
-        return (license.ipfsCID, license.studentDID, license.isValid, license.timestamp);
+        return (license.ipfsCID, license.easUID, license.studentDID, license.isValid, license.timestamp);
     }
 
     function getLicenseByDID(address _studentDID) external view returns (
-        string memory, address, bool, uint256
+        string memory, string memory, address, bool, uint256
     ) {
         string memory ipfsCID = didToCID[_studentDID];
         require(bytes(ipfsCID).length > 0, "No license found for this DID");
         License memory license = licenses[ipfsCID];
-        return (license.ipfsCID, license.studentDID, license.isValid, license.timestamp);
+        return (license.ipfsCID, license.easUID, license.studentDID, license.isValid, license.timestamp);
     }
 
     function getAllLicenses() external view returns (License[] memory) {

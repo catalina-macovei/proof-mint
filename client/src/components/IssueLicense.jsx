@@ -1,11 +1,10 @@
-// IssueLicense.js
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
 import { CONTRACT_ADDRESS } from '../config/contract';
 import { FaCopy } from 'react-icons/fa';
-import { issueAttestation } from '../eas/issue-attestation'; // update the import path
+import { issueAttestation } from '../eas/issue-attestation';
 
 const IssueLicense = ({ account }) => {
   const [proof, setProof] = useState(null);
@@ -37,14 +36,13 @@ const IssueLicense = ({ account }) => {
       const result = await axios.post('http://localhost:8000/api/v1/proof', uploadData);
 
       console.log('File uploaded successfully:', result);
-      
 
       // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-console.log("contact address", CONTRACT_ADDRESS,
-  LicenseManager.abi,
-  signer);
+      console.log("Contract address", CONTRACT_ADDRESS,
+        LicenseManager.abi,
+        signer);
 
       // Connect to your LicenseManager contract using the signer
       const contract = new ethers.Contract(
@@ -56,38 +54,39 @@ console.log("contact address", CONTRACT_ADDRESS,
       console.log('Contract connected:', contract);
 
       console.log('calling args:', result.data.ipfsHash.trim(),
-      studentAddress.trim());
-      
-      // Call the contract to issue the license
+        studentAddress.trim());
+
+      // Define a values object for your attestation.
+      const values = [
+        { name: "universityDID", value: "did:ethr:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1", type: "string" },
+        { name: "studentDID", value: "did:ethr:0xe83F39161C51B68ecC5eDC09Fe8C5FCb0359FED7", type: "string" },
+        { name: "studentName", value: "Test Name", type: "string" },
+        { name: "graduationYear", value: 2024, type: "uint256" },
+        { name: "degree", value: "Test Degree", type: "string" },
+        { name: "issuanceDate", value: "2024-01-01", type: "string" },
+        { name: "CID", value: "QmTestCID", type: "string" },
+      ];
+
+      // Create the EAS attestation using the same signer and the values object
+      const attestationUID = await issueAttestation(values, signer);
+      console.log('Attestation UID:', attestationUID);
+
+      // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
         result.data.ipfsHash.trim(),
+        attestationUID, // Pass the attestationUID here
         studentAddress.trim()
       );
 
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();
 
-      if (receipt.status === 1) {
-        // Define a values object for your attestation.
-        // You can customize this object based on your application's needs.
-        const values = [
-          { name: "universityDID", value: "did:ethr:0xb4baa0098fe8ff203c2a419a8bd24173e5f94eb1", type: "string" }, 
-          { name: "studentDID", value: "did:ethr:0xe83F39161C51B68ecC5eDC09Fe8C5FCb0359FED7", type: "string" },
-          { name: "studentName", value: "Test Name", type: "string" },
-          { name: "graduationYear", value: 2024, type: "uint256" },
-          { name: "degree", value: "Test Degree", type: "string" },
-          { name: "issuanceDate", value: "2024-01-01", type: "string" },
-          { name: "CID", value: "QmTestCID", type: "string" },
-        ];
+      setMessage({
+        type: 'success',
+        text: `License issued successfully! Attestation UID: ${attestationUID}`,
+        hash: receipt.transactionHash, // Ensure you're using the correct field
+      });
 
-        // Create the EAS attestation using the same signer and the values object
-        const attestationUID = await issueAttestation(values);
-        setMessage({
-          type: 'success',
-          text: `License issued successfully! Attestation UID: ${attestationUID}`,
-          hash: receipt.hash,
-        });
-      }
     } catch (error) {
       console.error('Error:', error);
       setMessage({
