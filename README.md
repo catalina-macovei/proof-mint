@@ -73,12 +73,10 @@ npx hardhat test
 
 ### Diagrams
 #### The process of uploading a file to IPFS:
-![Process Diagram](frontend/public/images/process-diagram.png)
+![Process Diagram](client/public/images/process-diagram.png)
 #### The workflow of the app:
-![Workflow Diagram](frontend/public/images/image.png)
+![Workflow Diagram](client/public/images/image.png)
 
-#### SSI concept diagram:
-![SSI Diagram](frontend/public/images/ssi-diagram.png)
 
 ## Authors
 - Macovei Catalina 
