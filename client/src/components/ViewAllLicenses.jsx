@@ -41,10 +41,9 @@ const ViewAllLicenses = () => {
                 {loading ? (
                     <div className="text-center">Loading licenses...</div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col gap-2 ">
                         {licenses.map((license, index) => (
                             <Link to={`/license/${license.ipfsCID}`} key={index}>
-
                                 <div key={index} className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                         CID: {license.ipfsCID}
