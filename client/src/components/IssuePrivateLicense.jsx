@@ -4,9 +4,9 @@ import { ethers } from 'ethers';
 import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
 import { CONTRACT_ADDRESS } from '../config/contract';
 import { FaCopy } from 'react-icons/fa';
-import { issueAttestation } from '../eas/issue-attestation';
+import { createAttestation, verifyProof } from '../eas/merkel_private_attestation';
 
-const IssueLicense = ({ account }) => {
+const IssuePrivateLicense = ({ account }) => {
   const [proof, setProof] = useState(null);
   const [studentDID, setStudentDID] = useState('');
   const [message, setMessage] = useState('');
@@ -68,8 +68,13 @@ const IssueLicense = ({ account }) => {
       ];
 
       // Create the EAS attestation using the same signer and the values object
-      const attestationUID = await issueAttestation(values, signer);
+      const {attestationUID, multiProofJson} = await createAttestation(signer, values);
       console.log('Attestation UID:', attestationUID);
+      console.log('Proof:', multiProofJson);
+
+      const res = await verifyProof(signer, attestationUID, multiProofJson);
+      console.log('Proof verified:', res);
+
 
       // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
@@ -85,6 +90,7 @@ const IssueLicense = ({ account }) => {
         type: 'success',
         text: `License issued successfully! Attestation UID: ${attestationUID}`,
         hash: receipt.transactionHash, // Ensure you're using the correct field
+        multiProofJson: multiProofJson,
       });
 
     } catch (error) {
@@ -100,7 +106,7 @@ const IssueLicense = ({ account }) => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
       <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
-        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Issue Public License</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Issue Private License</h2>
 
         <form onSubmit={processForm} className="space-y-4">
           <div>
@@ -152,6 +158,24 @@ const IssueLicense = ({ account }) => {
                 </div>
               </div>
             )}
+                {message.multiProofJson && (
+                <div className="p-4 bg-gray-100 rounded-lg">
+                    <div className="bg-white p-3 rounded-md shadow-sm">
+                    <p className="text-sm font-mono break-words overflow-hidden text-gray-700">
+                        <strong>Multi-Proof JSON:</strong>
+                    </p>
+                    <pre className="p-2 bg-gray-200 rounded-md text-sm text-gray-800 overflow-x-auto">
+                        {message.multiProofJson}
+                    </pre>
+                    <button
+                        onClick={() => navigator.clipboard.writeText(message.multiProofJson)}
+                        className="mt-2 p-2 w-full text-gray-500 hover:text-blue-500 transition-colors flex justify-center items-center"
+                    >
+                        <FaCopy className="mr-2" /> Copy Proof JSON
+                    </button>
+                    </div>
+                </div>
+                )}
           </div>
         )}
 
@@ -160,4 +184,4 @@ const IssueLicense = ({ account }) => {
   );
 };
 
-export default IssueLicense;
+export default IssuePrivateLicense;

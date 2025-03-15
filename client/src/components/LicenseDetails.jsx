@@ -5,6 +5,7 @@ import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseMan
 import { CONTRACT_ADDRESS } from '../config/contract';
 import { getAttestation, decodeAttestationData } from '../eas/fetch_attestation_data';
 import { HiMiniShieldCheck } from "react-icons/hi2";
+import { RevokeLicenseButton } from './RevokeLicenseButton';
 
 
 const LicenseDetails = () => {
@@ -85,6 +86,7 @@ const LicenseDetails = () => {
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
                     License Details
                 </h2>
+
 
                 {loading ? (
                     <div className="text-center">Loading license details...</div>
@@ -183,6 +185,8 @@ const LicenseDetails = () => {
                                 </div>
                             </div>
                         )}
+                        <RevokeLicenseButton ipfsCID={license.ipfsCID} className="absolute"></RevokeLicenseButton>
+
                     </div>
                 ) : (
                     <div className="text-center text-red-500">License not found</div>

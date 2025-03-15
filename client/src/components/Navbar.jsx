@@ -82,10 +82,26 @@ const Navbar = ({ account, onConnect, loading }) => {
                   </li>
                   <li>
                     <NavLink
+                      to="/issue-private-license"
+                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
+                    >
+                      Issue Private License
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
                       to="/verify-license"
                       className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
                     >
                       Verify License
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/verify-private-license"
+                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
+                    >
+                      Verify Private License
                     </NavLink>
                   </li>
                   <li>
