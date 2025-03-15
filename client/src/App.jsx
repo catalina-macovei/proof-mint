@@ -12,6 +12,8 @@ import VerifyLicense from './components/VerifyLicense';
 import LicenseDetails from './components/LicenseDetails';
 import IssuePrivateLicense from './components/IssuePrivateLicense';
 import VerifyPrivateLicense from './components/VerifyPrivateLicense';
+import WalletLogin from './components/WalletLogin';
+
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -45,7 +47,8 @@ function App() {
                 <div className="flex-grow flex items-center justify-center">
 
                     <Routes>
-                        <Route path="/login" element={<MetaMaskLogin onLogin={handleLogin} />} />
+                        {/* <Route path="/login" element={<MetaMaskLogin onLogin={handleLogin} />} /> */}
+                        <Route path="/login" element={<WalletLogin onLogin={handleLogin} />} />
                         <Route path="/" element={<HomePage />} />
                         <Route path="/faq" element={ <FAQ />} />
                         <Route path="/issue-license" element={account ? <IssueLicense account={account} /> : <Navigate to="/login" />} />
