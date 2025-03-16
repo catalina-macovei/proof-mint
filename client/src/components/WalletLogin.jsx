@@ -75,26 +75,24 @@ const WalletLogin = ({ onLogin }) => {
     };
 
     return (
-        <div className="w-full max-w-xl md:max-w-2xl mx-auto my-8 p-6 bg-white shadow-lg rounded-lg space-y-4">
+        <div className="flex flex-col items-center w-1/2 mx-auto my-8 p-6 space-y-4">
+            <img src="/images/neural-eth.png" alt="athereum loggo" className="w-48 h-48 mb-4" />
             <h2 className="text-2xl font-bold text-center flex items-center justify-center">
-                <FaWallet className="mr-2" /> Connect Wallet
+                <FaWallet className="mr-2" />  Wallet
             </h2>
 
             {!address ? (
-                <div className="space-y-2 text-center">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg w-full flex items-center justify-center"
-                    >
-                        <FaWallet className="mr-2" /> Connect
+                        className="flex items-center text-xl gap-2 justify-center w-4/12 px-6 py-3 bg-gradient-to-r from-violet-600 to-blue-500 text-white font-medium rounded-xl shadow-lg hover:from-violet-700 hover:to-blue-600 transition duration-300 cursor-pointer"
+                        >
+                        <FaWallet className="" /> <span className='flex flex-row'>Connect</span>
                     </button>
-                </div>
             ) : (
-                <div className="bg-gray-50 p-4 rounded-lg shadow w-full space-y-2">
+                <div className="p-4 rounded-lg shadow w-full space-y-2 flex items-center flex-col">
                     <div className="flex items-center flex-wrap">
                         <FaWallet className="mr-2 text-blue-600" />
-                        <span className="font-semibold">Wallet Address:</span>
-                        <span className="ml-2 break-all">{address}</span>
+                        <span className="ml-2 overflow-hidden"><b>Address:</b> {address}</span>
                     </div>
                     {balance && (
                         <div className="flex items-center flex-wrap">
@@ -105,7 +103,7 @@ const WalletLogin = ({ onLogin }) => {
                     )}
                     <button
                         onClick={disconnectWallet}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg w-full flex items-center justify-center mt-2"
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg w-1/2 flex items-center justify-center mt-2"
                     >
                         <FaWallet className="mr-2" /> Disconnect Wallet
                     </button>

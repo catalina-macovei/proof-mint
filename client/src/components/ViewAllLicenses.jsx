@@ -32,7 +32,7 @@ const ViewAllLicenses = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
+        <div className="min-h-screen flex flex-col justify-center items-center p-10">
             <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
                     All Licenses
