@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
-import { FaCopy } from 'react-icons/fa';
-import { createAttestation, verifyProof } from '../eas/merkel_private_attestation';
+import { verifyProof } from '../eas/merkel_private_attestation';
 
 
 const VerifyPrivateLicense = () => {

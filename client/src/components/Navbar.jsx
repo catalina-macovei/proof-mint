@@ -2,17 +2,29 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink } from "react-router";
 
 const Navbar = ({ account, onConnect, loading }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [openPrivateDropdown, setOpenPrivateDropdown] = useState(false);
+  const [openPublicDropdown, setOpenPublicDropdown] = useState(false);
+  const privateDropdownRef = useRef(null);
+  const publicDropdownRef = useRef(null);
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+  const togglePrivateDropdown = () => {
+    setOpenPrivateDropdown(!openPrivateDropdown);
+    setOpenPublicDropdown(false);
+  };
+
+  const togglePublicDropdown = () => {
+    setOpenPublicDropdown(!openPublicDropdown);
+    setOpenPrivateDropdown(false);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+      if (
+        privateDropdownRef.current && !privateDropdownRef.current.contains(event.target) &&
+        publicDropdownRef.current && !publicDropdownRef.current.contains(event.target)
+      ) {
+        setOpenPrivateDropdown(false);
+        setOpenPublicDropdown(false);
       }
     };
 
@@ -25,8 +37,7 @@ const Navbar = ({ account, onConnect, loading }) => {
   return (
     <nav className="bg-white dark:bg-gray-900 fixed shadow-xl w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">
       <div className="max-w-screen-xl flex items-center justify-between mx-auto p-4">
-        <NavLink
-          to="/">
+        <NavLink to="/">
           <span className="text-2xl font-semibold flex items-center dark:text-white">
             <img src="/images/logo.png" alt="Ethereum Logo" className="w-10 h-10 mr-2" />
             LM
@@ -39,73 +50,59 @@ const Navbar = ({ account, onConnect, loading }) => {
                 Home
               </NavLink>
             </li>
-            <li className="relative" ref={dropdownRef}>
+            <li className="relative" ref={privateDropdownRef}>
               <button
-                onClick={toggleDropdown}
+                onClick={togglePrivateDropdown}
                 className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500 focus:outline-none flex items-center"
               >
-                License Services
+                Private License
                 <span className="ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
               </button>
-              {isDropdownOpen && (
+              {openPrivateDropdown && (
                 <ul className="absolute mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-48 left-1/2 transform -translate-x-1/2">
                   <li>
-                    <NavLink
-                      to="/license-services"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
-                      All Services
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/licenses"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
-                      All Licenses
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/issue-license"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
-                      Issue License
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/issue-private-license"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
+                    <NavLink to="/issue-private-license" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
                       Issue Private License
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      to="/verify-license"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
+                    <NavLink to="/verify-private-license" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      Verify Private License
+                    </NavLink>
+                  </li>
+                </ul>
+              )}
+            </li>
+            <li className="relative" ref={publicDropdownRef}>
+              <button
+                onClick={togglePublicDropdown}
+                className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500 focus:outline-none flex items-center"
+              >
+                Public License
+                <span className="ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+              {openPublicDropdown && (
+                <ul className="absolute mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-48 left-1/2 transform -translate-x-1/2">
+                  <li>
+                    <NavLink to="/issue-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      Issue License
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/verify-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
                       Verify License
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink
-                      to="/verify-private-license"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
-                      Verify Private License
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/revoke-license"
-                      className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500"
-                    >
+                    <NavLink to="/revoke-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
                       Revoke License
                     </NavLink>
                   </li>

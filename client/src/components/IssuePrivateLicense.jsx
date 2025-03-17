@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
+import PrivateLicense from '../artifacts/contracts/PrivateLicense.sol/PrivateLicense.json';
+import { PRIVATE_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 import { FaCopy } from 'react-icons/fa';
 import { createAttestation, verifyProof } from '../eas/merkel_private_attestation';
 
@@ -40,14 +40,14 @@ const IssuePrivateLicense = ({ account }) => {
       // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      console.log("Contract address", CONTRACT_ADDRESS,
-        LicenseManager.abi,
+      console.log("Contract address", PRIVATE_LICENSE_CONTRACT_ADDRESS,
+        PrivateLicense.abi,
         signer);
 
-      // Connect to your LicenseManager contract using the signer
+      // Connect to your PrivateLicense contract using the signer
       const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        LicenseManager.abi,
+        PRIVATE_LICENSE_CONTRACT_ADDRESS,
+        PrivateLicense.abi,
         signer
       );
 
@@ -75,12 +75,14 @@ const IssuePrivateLicense = ({ account }) => {
       const res = await verifyProof(signer, attestationUID, multiProofJson);
       console.log('Proof verified:', res);
 
+      const multiProofString = JSON.stringify(multiProofJson);
 
       // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
         result.data.ipfsHash.trim(),
         attestationUID, // Pass the attestationUID here
-        studentAddress.trim()
+        studentAddress.trim(),
+        multiProofString
       );
 
       setMessage('Transaction submitted. Waiting for confirmation...');
@@ -104,8 +106,7 @@ const IssuePrivateLicense = ({ account }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
-      <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
+      <div className="mt-24 w-8/12 flex flex-col items-center justify-center m-auto overflow-scroll">
         <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">Issue Private License</h2>
 
         <form onSubmit={processForm} className="space-y-4">
@@ -180,7 +181,7 @@ const IssuePrivateLicense = ({ account }) => {
         )}
 
       </div>
-    </div>
+
   );
 };
 
