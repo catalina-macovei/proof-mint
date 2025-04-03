@@ -6,7 +6,7 @@ import Navbar from './components/Navbar';
 import './App.css'
 import FAQ from './components/FAQ';
 import IssueLicense from './components/IssueLicense';
-import ViewAllLicenses from './components/ViewAllLicenses';
+import ViewPublicLicenses from './components/ViewPublicLicenses';
 import LicenseServices from './components/LicenseServices';
 import VerifyLicense from './components/VerifyLicense';
 import LicenseDetails from './components/LicenseDetails';
@@ -15,6 +15,8 @@ import VerifyPrivateLicense from './components/VerifyPrivateLicense';
 import WalletLogin from './components/WalletLogin';
 import Services from './components/Services';
 import Home from './components/Home';
+import ViewPrivateLicenses from './components/ViewPrivateLicenses';
+import PrivateLicenseDetails from './components/PrivateLicenseDetails';
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -55,13 +57,15 @@ function App() {
                         <Route path="/welcome" element={<Welcome />} />
                         <Route path="/faq" element={ <FAQ />} />
                         <Route path="/issue-license" element={account ? <IssueLicense account={account} /> : <Navigate to="/login" />} />
-                        <Route path="/licenses" element={account ? <ViewAllLicenses /> : <Navigate to="/login" />} />
+                        <Route path="/view-public-licenses" element={account ? <ViewPublicLicenses /> : <Navigate to="/login" />} />
                         <Route path="/verify-license" element={account ? <VerifyLicense account={account} /> : <Navigate to="/login" />} />
                         <Route path="/license-services" element={<LicenseServices/>} />
-                        <Route path="/license/:ipfsCID" element={<LicenseDetails />} />
+                        <Route path="/license/:easUID" element={<LicenseDetails />} />
                         <Route path="/issue-private-license" element={account ? <IssuePrivateLicense account={account} /> : <Navigate to="/login" />} />
                         <Route path="/verify-private-license" element={account ? <VerifyPrivateLicense /> : <Navigate to="/login" />} />
-                        <Route path="/services" element={<Services />} />          
+                        <Route path="/services" element={<Services />} />
+                        <Route path='/view-private-licenses' element={account ? <ViewPrivateLicenses /> : <Navigate to="/login" />} />          
+                        <Route path='/private-license/:easUID' element={<PrivateLicenseDetails />} />          
                     </Routes>
 
                 </div>

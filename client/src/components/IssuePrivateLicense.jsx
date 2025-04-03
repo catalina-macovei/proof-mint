@@ -77,10 +77,11 @@ const IssuePrivateLicense = ({ account }) => {
 
       const multiProofString = JSON.stringify(multiProofJson);
 
+
       // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
-        result.data.ipfsHash.trim(),
         attestationUID, // Pass the attestationUID here
+        result.data.ipfsHash.trim(),
         studentAddress.trim(),
         multiProofString
       );

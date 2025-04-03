@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
+import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
+import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 import { FaCopy } from 'react-icons/fa';
 import { issueAttestation } from '../eas/issue-attestation';
 
@@ -40,14 +40,14 @@ const IssueLicense = ({ account }) => {
       // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      console.log("Contract address", CONTRACT_ADDRESS,
-        LicenseManager.abi,
+      console.log("Contract address", PUBLIC_LICENSE_CONTRACT_ADDRESS,
+        PublicLicense.abi,
         signer);
 
-      // Connect to your LicenseManager contract using the signer
+      // Connect to your PublicLicense contract using the signer
       const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        LicenseManager.abi,
+        PUBLIC_LICENSE_CONTRACT_ADDRESS,
+        PublicLicense.abi,
         signer
       );
 
@@ -73,8 +73,8 @@ const IssueLicense = ({ account }) => {
 
       // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
-        result.data.ipfsHash.trim(),
         attestationUID, // Pass the attestationUID here
+        result.data.ipfsHash.trim(),
         studentAddress.trim()
       );
 

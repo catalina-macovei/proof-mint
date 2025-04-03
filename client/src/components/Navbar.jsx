@@ -74,6 +74,11 @@ const Navbar = ({ account, onConnect, loading }) => {
                       Verify Private License
                     </NavLink>
                   </li>
+                  <li>
+                    <NavLink to="/view-private-licenses" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      View Private Licenses
+                    </NavLink>
+                  </li>
                 </ul>
               )}
             </li>
@@ -102,8 +107,8 @@ const Navbar = ({ account, onConnect, loading }) => {
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/revoke-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      Revoke License
+                    <NavLink to="/view-public-licenses" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      View Public Licenses
                     </NavLink>
                   </li>
                 </ul>

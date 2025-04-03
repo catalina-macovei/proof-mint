@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
+import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 import { getAttestation, decodeAttestationData } from '../eas/fetch_attestation_data';
 import { HiMiniShieldCheck } from "react-icons/hi2";
 import { RevokeLicenseButton } from './RevokeLicenseButton';
+import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
 
 
 const LicenseDetails = () => {
-    const { ipfsCID } = useParams();
+    const { easUID } = useParams();
     const [license, setLicense] = useState(null);
     const [attestation, setAttestation] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchLicenseDetails();
-    }, [ipfsCID]);
+        // Only fetch license details if easUID is available
+        if (easUID) {
+            fetchLicenseDetails();
+        }
+    }, [easUID]);
 
     const formatAttestationData = async (attestationArray) => {
         const decodedData = await decodeAttestationData(attestationArray[9]);
@@ -41,16 +44,18 @@ const LicenseDetails = () => {
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const contract = new ethers.Contract(
-                CONTRACT_ADDRESS,
-                LicenseManager.abi,
+                PUBLIC_LICENSE_CONTRACT_ADDRESS,
+                PublicLicense.abi,
                 provider
             );
 
-            // Get basic license info
-            const [isValid, easUID, studentDID] = await contract.getLicenseDetails(ipfsCID);
-
-            console.log("License Details:", isValid, studentDID, easUID);
-
+            console.log("License Details uid:" ,easUID);
+    
+            // Fetch full license details using easUID (directly from useParams)
+            const [ipfsCID, , studentDID, isValid, timestamp] = await contract.getLicenseDetails(easUID);
+    
+            
+    
             if (!easUID) {
                 setLoading(false);
                 return;
@@ -59,7 +64,6 @@ const LicenseDetails = () => {
             // Store license details in state
             setLicense({ isValid, studentDID, ipfsCID, easUID });
 
-            // Fetch EAS attestation data if UID exists
             let attestationData = null;
             const fetchedAttestation = await getAttestation(easUID);
 
@@ -78,6 +82,9 @@ const LicenseDetails = () => {
             setLoading(false);
         }
     };
+    
+    
+    
 
 
     return (
