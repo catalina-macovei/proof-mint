@@ -50,6 +50,11 @@ const Navbar = ({ account, onConnect, loading }) => {
                 Home
               </NavLink>
             </li>
+            <li>
+              <NavLink to="/portal" className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500">
+                Portal                    
+              </NavLink>
+            </li>
             <li className="relative" ref={privateDropdownRef}>
               <button
                 onClick={togglePrivateDropdown}

@@ -3,7 +3,6 @@ import { formatEther, BrowserProvider } from 'ethers';
 import { FaWallet, FaEthereum } from 'react-icons/fa';
 import { FcBusinessman } from "react-icons/fc";
 import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
-import { INFURA_API_KEY } from '../config/contract';
 import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
 import { ethers } from 'ethers';
 
@@ -18,11 +17,19 @@ const WalletLogin = ({ onLogin }) => {
     useEffect(() => {
         const savedAddress = sessionStorage.getItem('walletAddress');
         const savedBalance = sessionStorage.getItem('walletBalance');
+        const savedRole = sessionStorage.getItem('role');
+
         if (savedAddress) {
             setAddress(savedAddress);
             setBalance(savedBalance);
-            fetchRoleFromContract(savedAddress).then(setRole);
-
+            if (savedRole) {
+                setRole(savedRole);
+            } else {
+                fetchRoleFromContract(savedAddress).then(userRole => {
+                    setRole(userRole);
+                    sessionStorage.setItem('role', userRole);
+                });
+            }
         }
     }, []);
 
@@ -31,7 +38,12 @@ const WalletLogin = ({ onLogin }) => {
 
         sessionStorage.setItem('walletAddress', address);
         fetchBalance(address);
-        fetchRoleFromContract(address).then(setRole);
+
+        fetchRoleFromContract(address).then(userRole => {
+            setRole(userRole);
+            sessionStorage.setItem('role', userRole);
+        });
+
         onLogin?.(address);
     }, [address]);
 
@@ -125,10 +137,10 @@ const WalletLogin = ({ onLogin }) => {
                         </div>
                     )}
                     {role && (
-                    <div className="flex items-center flex-wrap">
-                        <FcBusinessman className="mr-2" size={25} />
-                        <div className="text-gray-700 font-medium"><span className="font-semibold">Role:</span> {role}</div>
-                   </div>
+                        <div className="flex items-center flex-wrap">
+                            <FcBusinessman className="mr-2" size={25} />
+                            <div className="text-gray-700 font-medium"><span className="font-semibold">Role:</span> {role}</div>
+                        </div>
                     )}
 
                     <button

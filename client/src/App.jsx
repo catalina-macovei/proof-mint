@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import MetaMaskLogin from './components/MetaMaskLogin';
 import Welcome from './components/Welcome';
 import Navbar from './components/Navbar';
 import './App.css'
@@ -17,6 +16,7 @@ import Services from './components/Services';
 import Home from './components/Home';
 import ViewPrivateLicenses from './components/ViewPrivateLicenses';
 import PrivateLicenseDetails from './components/PrivateLicenseDetails';
+import Portal from './components/Portal';
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -65,7 +65,8 @@ function App() {
                         <Route path="/verify-private-license" element={account ? <VerifyPrivateLicense /> : <Navigate to="/login" />} />
                         <Route path="/services" element={<Services />} />
                         <Route path='/view-private-licenses' element={account ? <ViewPrivateLicenses /> : <Navigate to="/login" />} />          
-                        <Route path='/private-license/:easUID' element={<PrivateLicenseDetails />} />          
+                        <Route path='/private-license/:easUID' element={<PrivateLicenseDetails />} />  
+                        <Route path='/portal' element={account ? <Portal/> : <Navigate to="/login" />} />    
                     </Routes>
 
                 </div>
