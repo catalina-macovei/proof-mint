@@ -51,7 +51,11 @@ contract PublicLicense is AccessControl {
         return existingLicenses[_ipfsCID][_studentDID];
     }
 
-
+    function getRole(address account) public view returns (string memory) {
+        if (hasRole(DEFAULT_ADMIN_ROLE, account)) return "Issuer";
+        if (hasRole(ISSUER_ROLE, account)) return "Issuer";
+        return "User";
+    }
 
     function issueLicense(
         string memory _easUID, 
