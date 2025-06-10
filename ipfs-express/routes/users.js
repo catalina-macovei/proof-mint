@@ -16,15 +16,23 @@ router.get('/', async (req, res) => {
   res.json(result.rows);
 });
 
-router.get('/:id', async (req, res) => {
-  const result = await pool.query(`SELECT * FROM Users WHERE UserID = $1`, [req.params.id]);
-  res.json(result.rows[0]);
+router.get('/eth/:ethAddress', async (req, res) => {
+  try {
+    console.log(req.params.ethAddress)
+    const result = await pool.query('SELECT * FROM Users WHERE EthAddress = $1', [req.params.ethAddress]);
+    if (result.rows.length === 0) return res.status(404).send('User not found');
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server error');
+  }
 });
 
-router.get('/eth/:ethAddress', async (req, res) => {
-  const result = await pool.query(`SELECT * FROM Users WHERE EthAddress = $1`, [req.params.ethAddress]);
-  res.json(result.rows[0]);
-});
+// router.get('/:id', async (req, res) => {
+//   const result = await pool.query(`SELECT * FROM Users WHERE UserID = $1`, [req.params.id]);
+//   res.json(result.rows[0]);
+// });
+
 
 router.put('/:id', async (req, res) => {
   const { UserType, UserName, Email, EthAddress } = req.body;

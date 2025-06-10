@@ -17,6 +17,7 @@ import Home from './components/Home';
 import ViewPrivateLicenses from './components/ViewPrivateLicenses';
 import PrivateLicenseDetails from './components/PrivateLicenseDetails';
 import Portal from './components/Portal';
+import Register from './components/Register';
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -66,7 +67,8 @@ function App() {
                         <Route path="/services" element={<Services />} />
                         <Route path='/view-private-licenses' element={account ? <ViewPrivateLicenses /> : <Navigate to="/login" />} />          
                         <Route path='/private-license/:easUID' element={<PrivateLicenseDetails />} />  
-                        <Route path='/portal' element={account ? <Portal/> : <Navigate to="/login" />} />    
+                        <Route path='/portal' element={account ? <Portal/> : <Navigate to="/login" />} />
+                        <Route path='/register' element={<Register/>}/>       
                     </Routes>
 
                 </div>

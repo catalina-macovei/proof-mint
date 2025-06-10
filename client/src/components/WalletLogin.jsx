@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { formatEther, BrowserProvider } from 'ethers';
 import { FaWallet, FaEthereum } from 'react-icons/fa';
-import { FcBusinessman } from "react-icons/fc";
+import { FcBusinessman } from 'react-icons/fc';
+import axios from 'axios';
 import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
 import { ethers } from 'ethers';
-
+import { NavLink } from "react-router";
 
 const WalletLogin = ({ onLogin }) => {
     const [address, setAddress] = useState(null);
@@ -25,10 +26,11 @@ const WalletLogin = ({ onLogin }) => {
             if (savedRole) {
                 setRole(savedRole);
             } else {
-                fetchRoleFromContract(savedAddress).then(userRole => {
-                    setRole(userRole);
-                    sessionStorage.setItem('role', userRole);
-                });
+                fetchRoleFromContract(savedAddress)
+                    .then(userRole => {
+                        setRole(userRole);
+                        sessionStorage.setItem('role', userRole);
+                    });
             }
         }
     }, []);
@@ -38,11 +40,14 @@ const WalletLogin = ({ onLogin }) => {
 
         sessionStorage.setItem('walletAddress', address);
         fetchBalance(address);
+        fetchRoleFromContract(address)
+            .then(userRole => {
+                setRole(userRole);
+                sessionStorage.setItem('role', userRole);
+            });
 
-        fetchRoleFromContract(address).then(userRole => {
-            setRole(userRole);
-            sessionStorage.setItem('role', userRole);
-        });
+        // Persist user to backend db
+        registerOrFetchUser(address);
 
         onLogin?.(address);
     }, [address]);
@@ -50,10 +55,40 @@ const WalletLogin = ({ onLogin }) => {
     const getWeb3Provider = () => {
         if (typeof window.ethereum !== 'undefined') {
             return new BrowserProvider(window.ethereum);
-        } else {
-            throw new Error('MetaMask not installed');
+        }
+        throw new Error('MetaMask not installed');
+    };
+
+    const registerOrFetchUser = async (ethAddress) => {
+        try {
+            // Check if user exists by ETH address
+            const res = await axios.get(`/users/eth/${ethAddress}`);
+            console.log(res);
+
+            if (res.status === 404) {
+                const newUser = {
+                    UserType: 'wallet',
+                    UserName: '',
+                    Email: '',
+                    EthAddress: ethAddress
+                };
+                await axios.post('/users', newUser);
+            }
+        } catch (error) {
+            console.error('Error registering/fetching user:', error);
+            if (error.response.status === 404) {
+                const newUser = {
+                    UserType: 'wallet',
+                    UserName: '',
+                    Email: '',
+                    EthAddress: ethAddress
+                };
+                const res = await axios.post('/users', newUser);
+                console.log(res)
+            }
         }
     };
+
 
     const connectWallet = async () => {
         try {
@@ -62,41 +97,44 @@ const WalletLogin = ({ onLogin }) => {
             }
 
             const browserProvider = new BrowserProvider(window.ethereum);
-            setProvider(browserProvider); // Fix here!
+            setProvider(browserProvider);
 
             await window.ethereum.request({ method: 'eth_requestAccounts' });
             const signer = await browserProvider.getSigner();
-            const address = await signer.getAddress();
+            const addr = await signer.getAddress();
 
-            setAddress(address);
-            sessionStorage.setItem('walletAddress', address);
-            fetchBalance(address, browserProvider);
-            onLogin?.(address);
+            setAddress(addr);
+            sessionStorage.setItem('walletAddress', addr);
+            fetchBalance(addr, browserProvider);
         } catch (error) {
             console.error('MetaMask connection failed:', error);
+        } finally {
+            setIsModalOpen(false);
         }
     };
 
-
-
-    const fetchRoleFromContract = async (address) => {
+    const fetchRoleFromContract = async (addr) => {
         try {
             const provider = getWeb3Provider();
-            const contract = new ethers.Contract(PUBLIC_LICENSE_CONTRACT_ADDRESS, PublicLicense.abi, provider);
-            const userRole = await contract.getRole(address);
-            return userRole;
+            const contract = new ethers.Contract(
+                PUBLIC_LICENSE_CONTRACT_ADDRESS,
+                PublicLicense.abi,
+                provider
+            );
+            return await contract.getRole(addr);
         } catch (error) {
             console.error('Error fetching role from contract:', error);
             return 'Unknown';
         }
     };
 
-    const fetchBalance = async (walletAddress) => {
+    const fetchBalance = async (walletAddr) => {
         try {
             if (!provider) return;
-            const balance = await provider.getBalance(walletAddress);
-            setBalance(Number(formatEther(balance)).toFixed(2));
-            sessionStorage.setItem('walletBalance', Number(formatEther(balance)).toFixed(2));
+            const bal = await provider.getBalance(walletAddr);
+            const formatted = Number(formatEther(bal)).toFixed(2);
+            setBalance(formatted);
+            sessionStorage.setItem('walletBalance', formatted);
         } catch (error) {
             console.error('Failed to fetch balance:', error);
         }
@@ -106,6 +144,8 @@ const WalletLogin = ({ onLogin }) => {
         setAddress(null);
         setBalance(null);
         sessionStorage.removeItem('walletAddress');
+        sessionStorage.removeItem('walletBalance');
+        sessionStorage.removeItem('role');
         window.location.reload();
     };
 
@@ -117,12 +157,24 @@ const WalletLogin = ({ onLogin }) => {
             </h2>
 
             {!address ? (
+                <div className='flex flex-col gap-2 w-full items-center'>
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center text-xl gap-2 justify-center w-4/12 px-6 py-3 bg-gradient-to-r from-violet-600 to-blue-500 text-white font-medium rounded-xl shadow-lg hover:from-violet-700 hover:to-blue-600 transition duration-300 cursor-pointer"
                 >
                     <FaWallet className="" /> <span className='flex flex-row'>Connect</span>
                 </button>
+                <p className="text-gray-600 mt-4 text-sm">
+                    Don’t have an account?{' '}
+                    <NavLink
+                        to="/register"
+                        className="text-blue-600 hover:text-blue-800 font-medium underline"
+                    >
+                        Click here to register.
+                    </NavLink>
+                </p>
+
+                </div>
             ) : (
                 <div className="p-4 rounded-lg shadow w-full space-y-2 flex items-center flex-col">
                     <div className="flex items-center flex-wrap">
