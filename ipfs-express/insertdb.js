@@ -10,6 +10,9 @@ const insertTables = async () => {
         INSERT INTO Faculties (FacultyID, UserID, UniversityID, DepartmentName)
         VALUES 
         (1, 1, 1, 'Faculty of Mathematics and Computer Science');
+
+        INSERT INTO Students (StudentID, UserID, FacultyID)
+        VALUES (1, 2, 1);
         COMMIT;
     `);
 

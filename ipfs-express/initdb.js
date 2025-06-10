@@ -7,7 +7,7 @@ const createTables = async () => {
       DROP TABLE IF EXISTS Students CASCADE;
       DROP TABLE IF EXISTS Faculties CASCADE;
       DROP TABLE IF EXISTS Universities CASCADE;
-      DROP TABLE IF EXISTS Users CASCADE;
+      DROP TABLE IF EXISTS Applications CASCADE;
 
 
       CREATE TABLE IF NOT EXISTS Users (
@@ -47,7 +47,7 @@ const createTables = async () => {
         FacultyID INT NOT NULL,
         Status VARCHAR(50) DEFAULT 'Pending',
         CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (UserID) REFERENCES Users(UserID),
+        FOREIGN KEY (StudentID  ) REFERENCES Students(StudentID),
         FOREIGN KEY (FacultyID) REFERENCES Faculties(FacultyID)
         );
 

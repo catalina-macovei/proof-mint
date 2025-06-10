@@ -2,29 +2,19 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink } from "react-router";
 
 const Navbar = ({ account, onConnect, loading }) => {
-  const [openPrivateDropdown, setOpenPrivateDropdown] = useState(false);
-  const [openPublicDropdown, setOpenPublicDropdown] = useState(false);
-  const privateDropdownRef = useRef(null);
-  const publicDropdownRef = useRef(null);
+  const [openVerifyDropdown, setOpenVerifyDropdown] = useState(false);
+  const verifyDropdownRef = useRef(null);
 
-  const togglePrivateDropdown = () => {
-    setOpenPrivateDropdown(!openPrivateDropdown);
-    setOpenPublicDropdown(false);
-  };
-
-  const togglePublicDropdown = () => {
-    setOpenPublicDropdown(!openPublicDropdown);
-    setOpenPrivateDropdown(false);
+  const toggleVerifyDropdown = () => {
+    setOpenVerifyDropdown(!openVerifyDropdown);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        privateDropdownRef.current && !privateDropdownRef.current.contains(event.target) &&
-        publicDropdownRef.current && !publicDropdownRef.current.contains(event.target)
+        verifyDropdownRef.current && !verifyDropdownRef.current.contains(event.target)
       ) {
-        setOpenPrivateDropdown(false);
-        setOpenPublicDropdown(false);
+        setOpenVerifyDropdown(false);
       }
     };
 
@@ -55,65 +45,28 @@ const Navbar = ({ account, onConnect, loading }) => {
                 Portal                    
               </NavLink>
             </li>
-            <li className="relative" ref={privateDropdownRef}>
+            <li className="relative" ref={verifyDropdownRef}>
               <button
-                onClick={togglePrivateDropdown}
+                onClick={toggleVerifyDropdown}
                 className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500 focus:outline-none flex items-center"
               >
-                Private License
+                Verify
                 <span className="ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
               </button>
-              {openPrivateDropdown && (
+              {openVerifyDropdown && (
                 <ul className="absolute mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-48 left-1/2 transform -translate-x-1/2">
                   <li>
-                    <NavLink to="/issue-private-license" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      Issue Private License
+                    <NavLink to="/verify-license" onClick={() => setOpenVerifyDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      Verify Public Attestations
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/verify-private-license" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      Verify Private License
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink to="/view-private-licenses" onClick={() => setOpenPrivateDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      View Private Licenses
-                    </NavLink>
-                  </li>
-                </ul>
-              )}
-            </li>
-            <li className="relative" ref={publicDropdownRef}>
-              <button
-                onClick={togglePublicDropdown}
-                className="text-gray-900 hover:text-blue-700 dark:text-white dark:hover:text-blue-500 focus:outline-none flex items-center"
-              >
-                Public License
-                <span className="ml-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </button>
-              {openPublicDropdown && (
-                <ul className="absolute mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-48 left-1/2 transform -translate-x-1/2">
-                  <li>
-                    <NavLink to="/issue-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      Issue License
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink to="/verify-license" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      Verify License
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink to="/view-public-licenses" className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
-                      View Public Licenses
+                    <NavLink to="/verify-private-license" onClick={() => setOpenVerifyDropdown(false)} className="block px-4 py-2 text-gray-900 hover:bg-blue-100 dark:text-white dark:hover:bg-blue-500">
+                      Verify Private Attestations
                     </NavLink>
                   </li>
                 </ul>

@@ -3,36 +3,119 @@ import pool from '../db.js';
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { UserID, FacultyID, ApplicationType, Status } = req.body;
-  const result = await pool.query(
-    `INSERT INTO Applications (UserID, FacultyID, ApplicationType, Status) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [UserID, FacultyID, ApplicationType, Status || 'Pending']
-  );
-  res.json(result.rows[0]);
+  const { StudentID, FacultyID, Status, AttestationType } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO Applications (StudentID, FacultyID, Status, AttestationType) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [StudentID, FacultyID, Status || 'Pending', AttestationType || 'Public']
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 router.get('/', async (req, res) => {
-  const result = await pool.query(`SELECT * FROM Applications`);
-  res.json(result.rows);
+  try {
+    const result = await pool.query(`SELECT * FROM Applications`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 router.get('/:id', async (req, res) => {
-  const result = await pool.query(`SELECT * FROM Applications WHERE ApplicationID = $1`, [req.params.id]);
-  res.json(result.rows[0]);
+  try {
+    const result = await pool.query(`SELECT * FROM Applications WHERE ApplicationID = $1`, [req.params.id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Get applications by student ID
+router.get('/student/:studentId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        a.*,
+        f.DepartmentName as facultyname,
+        f.DepartmentName as departmentname
+       FROM Applications a
+       LEFT JOIN Faculties f ON a.FacultyID = f.FacultyID
+       WHERE a.StudentID = $1
+       ORDER BY a.CreatedAt DESC`,
+      [req.params.studentId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Get applications by faculty ID
+router.get('/faculty/:facultyId', async (req, res) => {
+  try {
+    console.log('Fetching applications for faculty ID:', req.params.facultyId);
+
+    const result = await pool.query(
+      `SELECT 
+        a.*,
+        f.DepartmentName as facultyname,
+        f.DepartmentName as departmentname,
+        u.UserName as studentname,
+        u.Email as studentemail,
+        u.EthAddress as studentethaddress,
+        s.StudentID as studentid
+       FROM Applications a
+       LEFT JOIN Faculties f ON a.FacultyID = f.FacultyID
+       LEFT JOIN Students s ON a.StudentID = s.StudentID
+       LEFT JOIN Users u ON s.UserID = u.UserID
+       WHERE a.FacultyID = $1
+       ORDER BY a.CreatedAt DESC`,
+      [req.params.facultyId]
+    );
+
+    console.log('Applications found:', result.rows.length);
+    console.log('Applications data:', result.rows);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error in /applications/faculty/:facultyId:', err.message);
+    res.status(500).json({ error: 'Internal Server Error: ' + err.message });
+  }
 });
 
 router.put('/:id', async (req, res) => {
-  const { UserID, FacultyID, ApplicationType, Status } = req.body;
-  const result = await pool.query(
-    `UPDATE Applications SET UserID = $1, FacultyID = $2, ApplicationType = $3, Status = $4, UpdatedAt = CURRENT_TIMESTAMP WHERE ApplicationID = $5 RETURNING *`,
-    [UserID, FacultyID, ApplicationType, Status, req.params.id]
-  );
-  res.json(result.rows[0]);
+  const { StudentID, FacultyID, Status, AttestationType } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE Applications 
+   SET StudentID = $1, FacultyID = $2, Status = $3, AttestationType = $4
+   WHERE ApplicationID = $5 
+   RETURNING *`,
+      [StudentID, FacultyID, Status, AttestationType, req.params.id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 router.delete('/:id', async (req, res) => {
-  const result = await pool.query(`DELETE FROM Applications WHERE ApplicationID = $1 RETURNING *`, [req.params.id]);
-  res.json(result.rows[0]);
+  try {
+    const result = await pool.query(`DELETE FROM Applications WHERE ApplicationID = $1 RETURNING *`, [req.params.id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 export default router;

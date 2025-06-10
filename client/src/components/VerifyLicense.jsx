@@ -39,7 +39,7 @@ const VerifyLicense = () => {
         <div className="min-h-screen flex flex-col justify-center items-center p-10">
             <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
-                    Verify License
+                    Verify Public Attestation
                 </h2>
 
                 <input
@@ -54,7 +54,7 @@ const VerifyLicense = () => {
                     onClick={handleVerify}
                     className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
-                    Verify License
+                    Verify 
                 </button>
 
                 {error && (

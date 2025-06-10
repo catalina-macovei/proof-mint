@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { formatEther, BrowserProvider } from 'ethers';
-import { FaWallet, FaEthereum } from 'react-icons/fa';
+import { FaWallet, FaEthereum, FaEdit, FaTimes, FaSave } from 'react-icons/fa';
 import { FcBusinessman } from 'react-icons/fc';
 import axios from 'axios';
 import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
@@ -13,7 +13,19 @@ const WalletLogin = ({ onLogin }) => {
     const [balance, setBalance] = useState(null);
     const [provider, setProvider] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [role, setRole] = useState(null);
+    const [userInfo, setUserInfo] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateMessage, setUpdateMessage] = useState('');
+    const [updateMessageType, setUpdateMessageType] = useState('');
+
+    // Profile form state
+    const [profileData, setProfileData] = useState({
+        UserType: '',
+        UserName: '',
+        Email: ''
+    });
 
     useEffect(() => {
         const savedAddress = sessionStorage.getItem('walletAddress');
@@ -32,6 +44,8 @@ const WalletLogin = ({ onLogin }) => {
                         sessionStorage.setItem('role', userRole);
                     });
             }
+            // Fetch user info when address is loaded
+            fetchUserInfo(savedAddress);
         }
     }, []);
 
@@ -51,6 +65,22 @@ const WalletLogin = ({ onLogin }) => {
 
         onLogin?.(address);
     }, [address]);
+
+    const fetchUserInfo = async (ethAddress) => {
+        try {
+            const res = await axios.get(`/users/eth/${ethAddress}`);
+            if (res.status === 200) {
+                setUserInfo(res.data);
+                setProfileData({
+                    UserType: res.data.UserType || res.data.usertype || '',
+                    UserName: res.data.UserName || res.data.username || '',
+                    Email: res.data.Email || res.data.email || ''
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user info:', error);
+        }
+    };
 
     const getWeb3Provider = () => {
         if (typeof window.ethereum !== 'undefined') {
@@ -73,10 +103,17 @@ const WalletLogin = ({ onLogin }) => {
                     EthAddress: ethAddress
                 };
                 await axios.post('/users', newUser);
+            } else {
+                setUserInfo(res.data);
+                setProfileData({
+                    UserType: res.data.UserType || res.data.usertype || '',
+                    UserName: res.data.UserName || res.data.username || '',
+                    Email: res.data.Email || res.data.email || ''
+                });
             }
         } catch (error) {
             console.error('Error registering/fetching user:', error);
-            if (error.response.status === 404) {
+            if (error.response?.status === 404) {
                 const newUser = {
                     UserType: 'wallet',
                     UserName: '',
@@ -84,11 +121,11 @@ const WalletLogin = ({ onLogin }) => {
                     EthAddress: ethAddress
                 };
                 const res = await axios.post('/users', newUser);
-                console.log(res)
+                console.log(res);
+                setUserInfo(res.data);
             }
         }
     };
-
 
     const connectWallet = async () => {
         try {
@@ -140,9 +177,57 @@ const WalletLogin = ({ onLogin }) => {
         }
     };
 
+    const handleProfileInputChange = (e) => {
+        const { name, value } = e.target;
+        setProfileData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        setIsUpdating(true);
+        setUpdateMessage('');
+
+        try {
+            if (!userInfo?.UserID && !userInfo?.userid) {
+                throw new Error('User ID not found');
+            }
+
+            const userId = userInfo.UserID || userInfo.userid;
+            const updateData = {
+                UserType: profileData.UserType,
+                UserName: profileData.UserName,
+                Email: profileData.Email,
+                EthAddress: address // Keep the same eth address
+            };
+
+            const res = await axios.put(`/users/${userId}`, updateData);
+
+            if (res.status === 200) {
+                setUserInfo(res.data);
+                setUpdateMessage('Profile updated successfully!');
+                setUpdateMessageType('success');
+                setTimeout(() => {
+                    setUpdateMessage('');
+                    setIsProfileModalOpen(false);
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            setUpdateMessage('Failed to update profile: ' + (error.response?.data?.error || error.message));
+            setUpdateMessageType('error');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     const disconnectWallet = () => {
         setAddress(null);
         setBalance(null);
+        setUserInfo(null);
+        setProfileData({ UserType: '', UserName: '', Email: '' });
         sessionStorage.removeItem('walletAddress');
         sessionStorage.removeItem('walletBalance');
         sessionStorage.removeItem('role');
@@ -158,22 +243,21 @@ const WalletLogin = ({ onLogin }) => {
 
             {!address ? (
                 <div className='flex flex-col gap-2 w-full items-center'>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center text-xl gap-2 justify-center w-4/12 px-6 py-3 bg-gradient-to-r from-violet-600 to-blue-500 text-white font-medium rounded-xl shadow-lg hover:from-violet-700 hover:to-blue-600 transition duration-300 cursor-pointer"
-                >
-                    <FaWallet className="" /> <span className='flex flex-row'>Connect</span>
-                </button>
-                <p className="text-gray-600 mt-4 text-sm">
-                    Don’t have an account?{' '}
-                    <NavLink
-                        to="/register"
-                        className="text-blue-600 hover:text-blue-800 font-medium underline"
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center text-xl gap-2 justify-center w-4/12 px-6 py-3 bg-gradient-to-r from-violet-600 to-blue-500 text-white font-medium rounded-xl shadow-lg hover:from-violet-700 hover:to-blue-600 transition duration-300 cursor-pointer"
                     >
-                        Click here to register.
-                    </NavLink>
-                </p>
-
+                        <FaWallet className="" /> <span className='flex flex-row'>Connect</span>
+                    </button>
+                    <p className="text-gray-600 mt-4 text-sm">
+                        Don't have an account?{' '}
+                        <NavLink
+                            to="/register"
+                            className="text-blue-600 hover:text-blue-800 font-medium underline"
+                        >
+                            Click here to register.
+                        </NavLink>
+                    </p>
                 </div>
             ) : (
                 <div className="p-4 rounded-lg shadow w-full space-y-2 flex items-center flex-col">
@@ -195,15 +279,38 @@ const WalletLogin = ({ onLogin }) => {
                         </div>
                     )}
 
-                    <button
-                        onClick={disconnectWallet}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg w-1/2 flex items-center justify-center mt-2"
-                    >
-                        <FaWallet className="mr-2" /> Disconnect Wallet
-                    </button>
+                    {/* User Info Display */}
+                    {userInfo && (
+                        <div className="w-full mt-4 p-3 bg-gray-50 rounded-lg">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Profile Information</h3>
+                            <div className="space-y-1 text-sm">
+                                <div><span className="font-medium">Type:</span> {userInfo.UserType || userInfo.usertype || 'Not set'}</div>
+                                <div><span className="font-medium">Name:</span> {userInfo.UserName || userInfo.username || 'Not set'}</div>
+                                <div><span className="font-medium">Email:</span> {userInfo.Email || userInfo.email || 'Not set'}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-2 w-full">
+                        <button
+                            onClick={() => setIsProfileModalOpen(true)}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg w-1/2 flex items-center justify-center mx-auto"
+                        >
+                            <FaEdit className="mr-2" /> Update Profile
+                        </button>
+
+                        <button
+                            onClick={disconnectWallet}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg w-1/2 flex items-center justify-center mx-auto"
+                        >
+                            <FaWallet className="mr-2" /> Disconnect Wallet
+                        </button>
+                    </div>
                 </div>
             )}
 
+            {/* Wallet Connection Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     <div
@@ -215,79 +322,145 @@ const WalletLogin = ({ onLogin }) => {
                         <h3 className="text-2xl font-bold">Connect Wallet</h3>
                         <p className='text-s text-gray-600 flex justify-center flex-col'>
                             Please connect your wallet to continue.
-
                             <span>The system supports the following wallets:</span>
                         </p>
                         <button
-                            onClick={() => connectWallet('metamask')}
-                            className="px-4 py-2 bg-transparent border border-gray-300 shadow-lg rounded-lg text-gray-600 w-full flex items-center justify-start gap-4"
+                            onClick={connectWallet}
+                            className="px-4 py-2 bg-transparent border border-gray-300 shadow-lg rounded-lg text-gray-600 w-full flex items-center justify-start gap-4 hover:bg-gray-50 transition-colors"
                         >
-
-                            <svg xmlns="http://www.w3.org/2000/svg" className='w-10 h-10' viewBox="0 0 212 189" id="metamask">
-                                <g fill="none" fill-rule="evenodd">
-                                    <polygon fill="#CDBDB2" points="60.75 173.25 88.313 180.563 88.313 171 90.563 168.75 106.313 168.75 106.313 180 106.313 187.875 89.438 187.875 68.625 178.875"></polygon>
-                                    <polygon fill="#CDBDB2" points="105.75 173.25 132.75 180.563 132.75 171 135 168.75 150.75 168.75 150.75 180 150.75 187.875 133.875 187.875 113.063 178.875" transform="matrix(-1 0 0 1 256.5 0)"></polygon>
-                                    <polygon fill="#393939" points="90.563 152.438 88.313 171 91.125 168.75 120.375 168.75 123.75 171 121.5 152.438 117 149.625 94.5 150.188"></polygon>
-                                    <polygon fill="#F89C35" points="75.375 27 88.875 58.5 95.063 150.188 117 150.188 123.75 58.5 136.125 27"></polygon>
-                                    <polygon fill="#F89D35" points="16.313 96.188 .563 141.75 39.938 139.5 65.25 139.5 65.25 119.813 64.125 79.313 58.5 83.813"></polygon>
-                                    <polygon fill="#D87C30" points="46.125 101.25 92.25 102.375 87.188 126 65.25 120.375"></polygon>
-                                    <polygon fill="#EA8D3A" points="46.125 101.813 65.25 119.813 65.25 137.813"></polygon>
-                                    <polygon fill="#F89D35" points="65.25 120.375 87.75 126 95.063 150.188 90 153 65.25 138.375"></polygon>
-                                    <polygon fill="#EB8F35" points="65.25 138.375 60.75 173.25 90.563 152.438"></polygon>
-                                    <polygon fill="#EA8E3A" points="92.25 102.375 95.063 150.188 86.625 125.719"></polygon>
-                                    <polygon fill="#D87C30" points="39.375 138.938 65.25 138.375 60.75 173.25"></polygon>
-                                    <polygon fill="#EB8F35" points="12.938 188.438 60.75 173.25 39.375 138.938 .563 141.75"></polygon>
-                                    <polygon fill="#E8821E" points="88.875 58.5 64.688 78.75 46.125 101.25 92.25 102.938"></polygon>
-                                    <polygon fill="#DFCEC3" points="60.75 173.25 90.563 152.438 88.313 170.438 88.313 180.563 68.063 176.625"></polygon>
-                                    <polygon fill="#DFCEC3" points="121.5 173.25 150.75 152.438 148.5 170.438 148.5 180.563 128.25 176.625" transform="matrix(-1 0 0 1 272.25 0)"></polygon>
-                                    <polygon fill="#393939" points="70.313 112.5 64.125 125.438 86.063 119.813" transform="matrix(-1 0 0 1 150.188 0)"></polygon>
-                                    <polygon fill="#E88F35" points="12.375 .563 88.875 58.5 75.938 27"></polygon>
-                                    <path fill="#8E5A30" d="M12.3750002,0.562500008 L2.25000003,31.5000005 L7.87500012,65.250001 L3.93750006,67.500001 L9.56250014,72.5625 L5.06250008,76.5000011 L11.25,82.1250012 L7.31250011,85.5000013 L16.3125002,96.7500014 L58.5000009,83.8125012 C79.1250012,67.3125004 89.2500013,58.8750003 88.8750013,58.5000009 C88.5000013,58.1250009 63.0000009,38.8125006 12.3750002,0.562500008 Z"></path>
-                                    <g transform="matrix(-1 0 0 1 211.5 0)">
-                                        <polygon fill="#F89D35" points="16.313 96.188 .563 141.75 39.938 139.5 65.25 139.5 65.25 119.813 64.125 79.313 58.5 83.813"></polygon>
-                                        <polygon fill="#D87C30" points="46.125 101.25 92.25 102.375 87.188 126 65.25 120.375"></polygon>
-                                        <polygon fill="#EA8D3A" points="46.125 101.813 65.25 119.813 65.25 137.813"></polygon>
-                                        <polygon fill="#F89D35" points="65.25 120.375 87.75 126 95.063 150.188 90 153 65.25 138.375"></polygon>
-                                        <polygon fill="#EB8F35" points="65.25 138.375 60.75 173.25 90 153"></polygon>
-                                        <polygon fill="#EA8E3A" points="92.25 102.375 95.063 150.188 86.625 125.719"></polygon>
-                                        <polygon fill="#D87C30" points="39.375 138.938 65.25 138.375 60.75 173.25"></polygon>
-                                        <polygon fill="#EB8F35" points="12.938 188.438 60.75 173.25 39.375 138.938 .563 141.75"></polygon>
-                                        <polygon fill="#E8821E" points="88.875 58.5 64.688 78.75 46.125 101.25 92.25 102.938"></polygon>
-                                        <polygon fill="#393939" points="70.313 112.5 64.125 125.438 86.063 119.813" transform="matrix(-1 0 0 1 150.188 0)"></polygon>
-                                        <polygon fill="#E88F35" points="12.375 .563 88.875 58.5 75.938 27"></polygon>
-                                        <path fill="#8E5A30" d="M12.3750002,0.562500008 L2.25000003,31.5000005 L7.87500012,65.250001 L3.93750006,67.500001 L9.56250014,72.5625 L5.06250008,76.5000011 L11.25,82.1250012 L7.31250011,85.5000013 L16.3125002,96.7500014 L58.5000009,83.8125012 C79.1250012,67.3125004 89.2500013,58.8750003 88.8750013,58.5000009 C88.5000013,58.1250009 63.0000009,38.8125006 12.3750002,0.562500008 Z"></path>
-                                    </g>
-                                </g>
-                            </svg>
-                            MetaMask Wallet
-
-
-                        </button>
-
-                        <button
-                            onClick={() => connectWallet('coinbase')}
-                            className="px-4 py-2 bg-transparent border border-gray-300 shadow-lg rounded-lg text-gray-600 w-full flex items-center justify-start gap-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className='w-10 h-10' fill="none" viewBox="0 0 512 512" id="coinbase">
-                                <g clip-path="url(#clip0_84_15704)">
-                                    <rect width="512" height="512" fill="#0052FF" rx="60"></rect>
-                                    <path fill="#0052FF" d="M255.5 40C375.068 40 472 136.932 472 256.5C472 376.068 375.068 473 255.5 473C135.932 473 39 376.068 39 256.5C39 136.932 135.932 40 255.5 40Z"></path>
-                                    <path fill="#fff" d="M255.593 331.733C213.515 331.733 179.513 297.638 179.513 255.653C179.513 213.668 213.608 179.573 255.593 179.573C293.258 179.573 324.535 206.999 330.547 242.973H407.19C400.71 164.826 335.337 103.398 255.5 103.398C171.436 103.398 103.245 171.589 103.245 255.653C103.245 339.717 171.436 407.907 255.5 407.907C335.337 407.907 400.71 346.48 407.19 268.333H330.453C324.441 304.307 293.258 331.733 255.593 331.733Z"></path>
-                                </g>
-                                <defs>
-                                    <clipPath id="clip0_84_15704">
-                                        <rect width="512" height="512" fill="#fff"></rect>
-                                    </clipPath>
-                                </defs>
-                            </svg>
-                            Coinbase Wallet
+                            <FaWallet className="w-8 h-8 text-orange-500" />
+                            <span className="text-lg font-medium">MetaMask</span>
                         </button>
 
                         <button
                             onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg w-full flex items-center justify-center"
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg w-full hover:bg-gray-400 transition-colors"
                         >
                             Cancel
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Profile Update Modal */}
+            {isProfileModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                    <div
+                        className="absolute inset-0 bg-black opacity-50"
+                        onClick={() => setIsProfileModalOpen(false)}
+                    ></div>
+
+                    <div className="bg-white p-6 rounded-lg relative z-10 w-96 max-w-md">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-gray-800">Update Profile</h3>
+                            <button
+                                onClick={() => setIsProfileModalOpen(false)}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <FaTimes size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleProfileUpdate} className="space-y-4">
+                            {/* User Type */}
+                            <div>
+                                <label htmlFor="UserType" className="block text-xl font-medium text-gray-700 mb-1">
+                                    User Type
+                                </label>
+                                <select
+                                    id="UserType"
+                                    name="UserType"
+                                    value={profileData.UserType}
+                                    onChange={handleProfileInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Select user type</option>
+                                    <option value="Student">Student</option>
+                                    <option value="Issuer">Issuer</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            {/* User Name */}
+                            <div>
+                                <label htmlFor="UserName" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="UserName"
+                                    name="UserName"
+                                    value={profileData.UserName}
+                                    onChange={handleProfileInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter your full name"
+                                />
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label htmlFor="Email" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    id="Email"
+                                    name="Email"
+                                    value={profileData.Email}
+                                    onChange={handleProfileInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter your email address"
+                                />
+                            </div>
+
+                            {/* Read-only fields for reference */}
+                            <div className="bg-gray-50 p-3 rounded-md">
+
+                                <span className="font-medium">Ethereum Address:</span>
+                                <div className="font-mono text-xs break-all">{address}</div>
+
+                            </div>
+
+                            {/* Update Message */}
+                            {updateMessage && (
+                                <div className={`p-3 rounded-md ${updateMessageType === 'success'
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : 'bg-red-100 text-red-800 border border-red-200'
+                                    }`}>
+                                    <p className="text-sm">{updateMessage}</p>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                                >
+                                    {isUpdating ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaSave className="mr-2" />
+                                            Update Profile
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsProfileModalOpen(false)}
+                                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                                    disabled={isUpdating}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
