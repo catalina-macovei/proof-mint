@@ -259,7 +259,7 @@ const IssuePrivateLicense = ({ account }) => {
   return (
     <div className="mt-24 w-10/12 max-w-4xl flex flex-col items-center justify-center m-auto">
       <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800 dark:text-white">
-        Issue Private License
+        Issue Private Attestation
         {certificateData && (
           <span className="block text-sm font-normal text-gray-600 mt-2">
             For: {certificateData.studentName} ({certificateData.studentAddress})
@@ -475,7 +475,7 @@ const IssuePrivateLicense = ({ account }) => {
           disabled={isSubmitting}
           className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          {isSubmitting ? 'Processing...' : 'Issue Private License'}
+          {isSubmitting ? 'Processing...' : 'Issue Private Attestation'}
         </button>
       </form>
 

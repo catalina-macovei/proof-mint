@@ -486,7 +486,7 @@ const IssueLicense = ({ account }) => {
           disabled={isSubmitting}
           className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          {isSubmitting ? 'Processing...' : 'Issue Public License'}
+          {isSubmitting ? 'Processing...' : 'Issue Public Attestation'}
         </button>
       </form>
 
@@ -524,7 +524,7 @@ const IssueLicense = ({ account }) => {
 
       {/* Form Instructions */}
       <div className="mt-8 w-full bg-green-50 p-6 rounded-lg">
-        <h3 className="text-lg font-semibold text-green-900 mb-3">Public License Instructions:</h3>
+        <h3 className="text-lg font-semibold text-green-900 mb-3">Public Attestation Instructions:</h3>
         <ul className="text-sm text-green-800 space-y-2">
           <li>• <strong>University DID:</strong> Automatically populated from your connected wallet</li>
           <li>• <strong>Student Address:</strong> Enter the student's Ethereum wallet address</li>
@@ -534,7 +534,7 @@ const IssueLicense = ({ account }) => {
           <li>• <strong>Degree:</strong> Select the appropriate degree from the dropdown</li>
           <li>• <strong>Issuance Date:</strong> Date when the certificate is being issued (defaults to today)</li>
           <li>• <strong>Proof Document:</strong> Upload supporting documentation (transcript, diploma, etc.)</li>
-          <li>• <strong>Public License:</strong> This certificate will be publicly visible and verifiable on the blockchain</li>
+          <li>• <strong>Public Attestation:</strong> This certificate will be publicly visible and verifiable on the blockchain</li>
         </ul>
       </div>
     </div>

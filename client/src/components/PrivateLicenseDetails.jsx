@@ -60,7 +60,7 @@ const PrivateLicenseDetails = () => {
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
             <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
-                    License Details
+                    Attestation Details
                 </h2>
 
 
@@ -70,7 +70,7 @@ const PrivateLicenseDetails = () => {
                     <div className="space-y-4">
                         <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
                             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                                License Information
+                                Attestation Information
                             </h3>
                             <p className="text-md flex flex-row font-medium text-gray-600 dark:text-gray-300">
                                 IPFS CID: {license.ipfsCID}

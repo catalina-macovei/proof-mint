@@ -19,7 +19,7 @@ const Welcome = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
         />
         <h1 className="text-5xl font-extrabold text-gray-900 mb-4 tracking-wide">
-          License Manager
+          Attestation Manager
         </h1>
         <p className="text-lg text-gray-600 mb-8 max-w-lg">
           Secure, decentralized, and efficient licensing on the blockchain.

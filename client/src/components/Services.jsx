@@ -6,14 +6,14 @@ import { FaLock, FaGlobe } from "react-icons/fa";
 const Services = () => {
   const services = [
     {
-      title: "Private License",
+      title: "Private Attestation",
       description: "Secure, permissioned, and on-chain attestation for private entities.",
       link: "/private-license",
       icon: <FaLock className="text-4xl text-violet-500" />,
     },
     {
-      title: "Public License",
-      description: "Transparent and verifiable licensing for open access and public use.",
+      title: "Public Attestation",
+      description: "Transparent and verifiable attestation for open access and public use.",
       link: "/public-license",
       icon: <FaGlobe className="text-4xl text-blue-500" />,
     },
@@ -30,7 +30,7 @@ const Services = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        On-Chain Licensing Services
+        On-Chain Attestation Services
       </motion.h1>
 
       <div className="grid md:grid-cols-2 gap-12 z-10">

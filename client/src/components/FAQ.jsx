@@ -40,23 +40,23 @@ const FAQ = () => {
   const faqs = [
     {
       id: 1,
-      question: "What is License Services?",
-      answer: "License Services is a comprehensive platform that allows you to manage, issue, verify, and revoke licenses with ease."
+      question: "What is Attestation Services?",
+      answer: "Attestation Services is a comprehensive platform that allows you to manage, issue, verify, and revoke licenses with ease."
     },
     {
       id: 2,
       question: "How do I issue a license?",
-      answer: "To issue a license, navigate to the 'Issue License' section, fill out the necessary details, and submit the form."
+      answer: "To issue a license, navigate to the 'Issue Attestation' section, fill out the necessary details, and submit the form."
     },
     {
       id: 3,
       question: "How can I verify a license?",
-      answer: "Verify a license by going to the 'Verify License' section and entering the license key. The system will validate its authenticity."
+      answer: "Verify a license by going to the 'Verify Attestation' section and entering the license key. The system will validate its authenticity."
     },
     {
       id: 4,
-      question: "What should I do if a license needs to be revoked?",
-      answer: "If a license needs to be revoked, go to the 'Revoke License' section and follow the instructions provided."
+      question: "What should I do if an attestation needs to be revoked?",
+      answer: "If an attestation needs to be revoked, go to the 'Revoke Attestation' section and follow the instructions provided."
     }
   ];
 

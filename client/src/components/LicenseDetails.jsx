@@ -101,7 +101,7 @@ const LicenseDetails = () => {
                     <div className="space-y-4">
                         <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
                             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                                License Information
+                                Attestation Information
                             </h3>
                             <p className="text-md flex flex-row font-medium text-gray-600 dark:text-gray-300">
                                 IPFS CID: {license.ipfsCID}
@@ -196,7 +196,7 @@ const LicenseDetails = () => {
 
                     </div>
                 ) : (
-                    <div className="text-center text-red-500">License not found</div>
+                    <div className="text-center text-red-500">Attestation not found</div>
                 )}
             </div>
         </div>

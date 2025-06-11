@@ -33,7 +33,7 @@ const RevokeLicenseButton = ({ ipfsCID }) => {
                 onClick={revokeLicense}
                 className="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
             >
-                Revoke License
+                Revoke Attestation
             </button>
 
             {txHash && (
