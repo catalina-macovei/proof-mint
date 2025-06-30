@@ -207,9 +207,7 @@ const IssuePrivateLicense = ({ account }) => {
         attestationUID,
         result.data.ipfsHash.trim(),
         formData.studentEthAddress.trim(),
-        multiProofString,
-        { gasLimit: 300000 }
-      );
+        multiProofString);
 
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();

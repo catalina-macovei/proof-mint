@@ -33,7 +33,7 @@ const PrivateLicenseDetails = () => {
 
             console.log("License Details uid:", easUID);
             const [ipfsCID, , studentDID, isValid, timestamp, proof] = await contract.getLicenseDetails(easUID, {
-                gasLimit: 300000 
+                gasLimit: 1000000 
             });
 
             if (!easUID) {

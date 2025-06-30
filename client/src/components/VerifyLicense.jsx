@@ -25,7 +25,7 @@ const VerifyLicense = () => {
             );
 
             const [isValid, studentDID] = await contract.verifyLicense(ipfsCID, {
-                gasLimit: 300000
+                gasLimit: 1000000
             });
             setIsLicenseValid(isValid);
             setLicenseStudentDID(studentDID);
