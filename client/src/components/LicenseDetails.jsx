@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
+import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 import { getAttestation, decodeAttestationData } from '../eas/fetch_attestation_data';
 import { HiMiniShieldCheck } from "react-icons/hi2";
 import { RevokeLicenseButton } from './RevokeLicenseButton';
-
+import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
+import IPFSFilePreview from './IPFSFilePreview';
 
 const LicenseDetails = () => {
-    const { ipfsCID } = useParams();
+    const { easUID } = useParams();
     const [license, setLicense] = useState(null);
     const [attestation, setAttestation] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchLicenseDetails();
-    }, [ipfsCID]);
+        if (easUID) {
+            fetchLicenseDetails();
+        }
+    }, [easUID]);
 
     const formatAttestationData = async (attestationArray) => {
         const decodedData = await decodeAttestationData(attestationArray[9]);
@@ -41,31 +43,28 @@ const LicenseDetails = () => {
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const contract = new ethers.Contract(
-                CONTRACT_ADDRESS,
-                LicenseManager.abi,
+                PUBLIC_LICENSE_CONTRACT_ADDRESS,
+                PublicLicense.abi,
                 provider
             );
 
-            // Get basic license info
-            const [isValid, easUID, studentDID] = await contract.getLicenseDetails(ipfsCID);
+            console.log("License Details uid:", easUID);
 
-            console.log("License Details:", isValid, studentDID, easUID);
+            const [ipfsCID, , studentDID, isValid, timestamp] = await contract.getLicenseDetails(easUID, {
+                gasLimit: 300000 
+            });
 
             if (!easUID) {
                 setLoading(false);
                 return;
             }
 
-            // Store license details in state
             setLicense({ isValid, studentDID, ipfsCID, easUID });
-
-            // Fetch EAS attestation data if UID exists
             let attestationData = null;
             const fetchedAttestation = await getAttestation(easUID);
 
             console.log("Raw attestation:", fetchedAttestation);
             if (fetchedAttestation) {
-                // Convert the Proxy object to an array
                 const attestationArray = Array.from(fetchedAttestation);
                 attestationData = await formatAttestationData(attestationArray);
                 console.log("Formatted attestation:", attestationData);
@@ -78,7 +77,6 @@ const LicenseDetails = () => {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
@@ -94,7 +92,7 @@ const LicenseDetails = () => {
                     <div className="space-y-4">
                         <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
                             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-                                License Information
+                                Attestation Information
                             </h3>
                             <p className="text-md flex flex-row font-medium text-gray-600 dark:text-gray-300">
                                 IPFS CID: {license.ipfsCID}
@@ -185,11 +183,13 @@ const LicenseDetails = () => {
                                 </div>
                             </div>
                         )}
-                        <RevokeLicenseButton ipfsCID={license.ipfsCID} className="absolute"></RevokeLicenseButton>
-
+                        <RevokeLicenseButton easUID={license.easUID} contractType="public" className="absolute"></RevokeLicenseButton>
+                        {license.ipfsCID && (
+                            <IPFSFilePreview cid={license.ipfsCID} />
+                        )}
                     </div>
                 ) : (
-                    <div className="text-center text-red-500">License not found</div>
+                    <div className="text-center text-red-500">Attestation not found</div>
                 )}
             </div>
         </div>
