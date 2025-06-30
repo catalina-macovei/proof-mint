@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 
 export default function StudentApplications() {
   const [applications, setApplications] = useState([]);
@@ -7,6 +8,7 @@ export default function StudentApplications() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStudentApplications = async () => {
@@ -51,6 +53,30 @@ export default function StudentApplications() {
     fetchStudentApplications();
   }, []);
 
+  const handleViewDiplomaDetails = (application) => {
+    const licenseUID = application.uid || application.UID;
+    const attestationType = (application.attestationtype || application.AttestationType)?.toLowerCase();
+
+    console.log('Viewing diploma details for application:', application);
+    console.log('License UID:', licenseUID);
+    console.log('Attestation Type:', attestationType);
+
+    if (licenseUID && licenseUID.trim() !== '') {
+      if (attestationType === 'private') {
+        console.log(`Navigating to private license: /private-license/${licenseUID}`);
+        navigate(`/private-license/${licenseUID}`);
+      } else {
+        console.log(`Navigating to public license: /license/${licenseUID}`);
+        navigate(`/license/${licenseUID}`);
+      }
+    } else {
+      console.error('No UID found for this application:', application);
+      setMessage('Unable to view diploma details - License UID not found. The certificate may not have been properly issued.');
+      setMessageType('error');
+      setTimeout(() => setMessage(''), 5000);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
@@ -87,50 +113,45 @@ export default function StudentApplications() {
   return (
     <div className="min-h-screen py-8 mt-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">My Applications</h1>
-                  {/* Summary Statistics */}
-        {applications.length > 0 && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {applications.length}
+          {applications.length > 0 && (
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-gray-900">
+                  {applications.length}
+                </div>
+                <div className="text-sm text-gray-600">Total Applications</div>
               </div>
-              <div className="text-sm text-gray-600">Total Applications</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-green-600">
-                {applications.filter(app => app.status?.toLowerCase() === 'approved').length}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-green-600">
+                  {applications.filter(app => app.status?.toLowerCase() === 'approved').length}
+                </div>
+                <div className="text-sm text-gray-600">Approved</div>
               </div>
-              <div className="text-sm text-gray-600">Approved</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-yellow-600">
-                {applications.filter(app => app.status?.toLowerCase() === 'pending' || app.status?.toLowerCase() === 'in review').length}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {applications.filter(app => app.status?.toLowerCase() === 'pending' || app.status?.toLowerCase() === 'in review').length}
+                </div>
+                <div className="text-sm text-gray-600">In Progress</div>
               </div>
-              <div className="text-sm text-gray-600">In Progress</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="text-2xl font-bold text-red-600">
-                {applications.filter(app => app.status?.toLowerCase() === 'rejected').length}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="text-2xl font-bold text-red-600">
+                  {applications.filter(app => app.status?.toLowerCase() === 'rejected').length}
+                </div>
+                <div className="text-sm text-gray-600">Rejected</div>
               </div>
-              <div className="text-sm text-gray-600">Rejected</div>
             </div>
-          </div>
-        )}
+          )}
         </div>
 
-        {/* Error Message */}
         {message && (
-          <div className={`mb-6 p-4 rounded-md ${
-            messageType === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-          }`}>
+          <div className={`mb-6 p-4 rounded-md ${messageType === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+            }`}>
             {message}
           </div>
         )}
 
-        {/* Applications List */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -192,7 +213,6 @@ export default function StudentApplications() {
                         )}
                       </div>
 
-                      {/* Status-specific information */}
                       {application.status?.toLowerCase() === 'approved' && (
                         <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-4">
                           <div className="flex items-center">
@@ -246,19 +266,24 @@ export default function StudentApplications() {
                       )}
                     </div>
 
-                    {/* Action buttons */}
                     <div className="ml-4 flex-shrink-0">
                       <div className="flex flex-col gap-2">
-                        {application.status?.toLowerCase() === 'approved' && (
-                          <button className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
-                            View Certificate
+                        {application.status?.toLowerCase() === 'issued' && (
+                          <button
+                            onClick={() => handleViewDiplomaDetails(application)}
+                            className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
+                          >
+                            View Diploma Details
                           </button>
                         )}
-                        <button className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                          View Details
-                        </button>
+                        {application.status?.toLowerCase() === 'approved' && (
+                          <button className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                            Certificate Ready
+                          </button>
+                        )}
                       </div>
                     </div>
+
                   </div>
                 </div>
               ))}

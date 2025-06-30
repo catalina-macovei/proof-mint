@@ -6,7 +6,7 @@ import { getAttestation, decodeAttestationData } from '../eas/fetch_attestation_
 import { HiMiniShieldCheck } from "react-icons/hi2";
 import { RevokeLicenseButton } from './RevokeLicenseButton';
 import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
-
+import IPFSFilePreview from './IPFSFilePreview';
 
 const LicenseDetails = () => {
     const { easUID } = useParams();
@@ -15,7 +15,6 @@ const LicenseDetails = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Only fetch license details if easUID is available
         if (easUID) {
             fetchLicenseDetails();
         }
@@ -49,27 +48,23 @@ const LicenseDetails = () => {
                 provider
             );
 
-            console.log("License Details uid:" ,easUID);
-    
-            // Fetch full license details using easUID (directly from useParams)
-            const [ipfsCID, , studentDID, isValid, timestamp] = await contract.getLicenseDetails(easUID);
-    
-            
-    
+            console.log("License Details uid:", easUID);
+
+            const [ipfsCID, , studentDID, isValid, timestamp] = await contract.getLicenseDetails(easUID, {
+                gasLimit: 300000 
+            });
+
             if (!easUID) {
                 setLoading(false);
                 return;
             }
 
-            // Store license details in state
             setLicense({ isValid, studentDID, ipfsCID, easUID });
-
             let attestationData = null;
             const fetchedAttestation = await getAttestation(easUID);
 
             console.log("Raw attestation:", fetchedAttestation);
             if (fetchedAttestation) {
-                // Convert the Proxy object to an array
                 const attestationArray = Array.from(fetchedAttestation);
                 attestationData = await formatAttestationData(attestationArray);
                 console.log("Formatted attestation:", attestationData);
@@ -82,10 +77,6 @@ const LicenseDetails = () => {
             setLoading(false);
         }
     };
-    
-    
-    
-
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
@@ -192,8 +183,10 @@ const LicenseDetails = () => {
                                 </div>
                             </div>
                         )}
-                        <RevokeLicenseButton ipfsCID={license.ipfsCID} className="absolute"></RevokeLicenseButton>
-
+                        <RevokeLicenseButton easUID={license.easUID} contractType="public" className="absolute"></RevokeLicenseButton>
+                        {license.ipfsCID && (
+                            <IPFSFilePreview cid={license.ipfsCID} />
+                        )}
                     </div>
                 ) : (
                     <div className="text-center text-red-500">Attestation not found</div>

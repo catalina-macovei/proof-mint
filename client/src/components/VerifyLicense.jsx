@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-import LicenseManager from '../artifacts/contracts/LicenseManager.sol/LicenseManager.json';
-import { CONTRACT_ADDRESS } from '../config/contract';
+import PublicLicense from '../artifacts/contracts/PublicLicense.sol/PublicLicense.json';
+import { PUBLIC_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
 
 const VerifyLicense = () => {
     const [ipfsCID, setIpfsCID] = useState('');
@@ -19,13 +19,14 @@ const VerifyLicense = () => {
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const contract = new ethers.Contract(
-                CONTRACT_ADDRESS,
-                LicenseManager.abi,
+                PUBLIC_LICENSE_CONTRACT_ADDRESS,
+                PublicLicense.abi,
                 provider
             );
 
-            const [isValid, studentDID] = await contract.verifyLicense(ipfsCID);
-            
+            const [isValid, studentDID] = await contract.verifyLicense(ipfsCID, {
+                gasLimit: 300000
+            });
             setIsLicenseValid(isValid);
             setLicenseStudentDID(studentDID);
             setError('');
@@ -41,20 +42,20 @@ const VerifyLicense = () => {
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
                     Verify Public Attestation
                 </h2>
-
+                
                 <input
                     type="text"
-                    placeholder="Enter IPFS CID"
+                    placeholder="Enter the Unique ID (UID)"
                     value={ipfsCID}
                     onChange={(e) => setIpfsCID(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg mb-4"
                 />
-
+                
                 <button
                     onClick={handleVerify}
                     className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
-                    Verify 
+                    Verify
                 </button>
 
                 {error && (
@@ -67,9 +68,6 @@ const VerifyLicense = () => {
                             Status: <span className={isLicenseValid ? "text-green-500" : "text-red-500"}>
                                 {isLicenseValid ? "Valid" : "Invalid"}
                             </span>
-                        </p>
-                        <p className="text-md mt-2 break-all">
-                            Student DID: {licenseStudentDID}
                         </p>
                     </div>
                 )}
@@ -86,6 +84,5 @@ const VerifyLicense = () => {
         </div>
     );
 };
-
 
 export default VerifyLicense;

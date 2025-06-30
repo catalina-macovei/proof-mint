@@ -26,14 +26,16 @@ contract PublicLicense is AccessControl {
 
     modifier onlyOwner(string memory _easUID) {
         require(licenses[_easUID].studentDID != address(0), "License does not exist");
-        require(licenses[_easUID].studentDID == msg.sender, "Not the license owner");
+        require(
+            licenses[_easUID].studentDID == msg.sender || hasRole(ISSUER_ROLE, msg.sender), 
+            "Not the license owner or issuer"
+        );
         _;
     }
 
-
     constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender); // Contract deployer = Admin
-        _grantRole(ISSUER_ROLE, msg.sender); // Deployer is also an issuer
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ISSUER_ROLE, msg.sender);
         emit IssuerAdded(msg.sender);
     }
 
@@ -52,7 +54,7 @@ contract PublicLicense is AccessControl {
     }
 
     function getRole(address account) public view returns (string memory) {
-        if (hasRole(DEFAULT_ADMIN_ROLE, account)) return "Issuer";
+        if (hasRole(DEFAULT_ADMIN_ROLE, account)) return "Admin";
         if (hasRole(ISSUER_ROLE, account)) return "Issuer";
         return "User";
     }
@@ -76,24 +78,15 @@ contract PublicLicense is AccessControl {
         emit LicenseIssued(_easUID, _studentDID, _ipfsCID);
     }
 
-    function revokeLicense(string memory _easUID) external onlyRole(ISSUER_ROLE) onlyOwner(_easUID) {
+    function revokeLicense(string memory _easUID) external onlyOwner(_easUID) {
+        require(licenses[_easUID].isValid, "License already revoked");
+        
         address studentDID = licenses[_easUID].studentDID;
-        string[] storage studentEASUIDs = didToEASUIDs[studentDID];
 
-        for (uint256 i = 0; i < studentEASUIDs.length; i++) {
-            if (keccak256(abi.encodePacked(studentEASUIDs[i])) == keccak256(abi.encodePacked(_easUID))) {
-                studentEASUIDs[i] = studentEASUIDs[studentEASUIDs.length - 1];
-                studentEASUIDs.pop();
-                break;
-            }
-        }
-
-        licenses[_easUID].isValid = false; // Mark license as invalid
-        existingLicenses[licenses[_easUID].ipfsCID][studentDID] = false; // Remove from existing licenses
+        licenses[_easUID].isValid = false;
 
         emit LicenseRevoked(_easUID, studentDID);
     }
-
 
     function verifyLicense(string memory _easUID) external view returns (bool isValid, address studentDID) {
         License memory license = licenses[_easUID];
@@ -110,6 +103,8 @@ contract PublicLicense is AccessControl {
     function getLicensesByDID(address _studentDID) external view returns (
         string[] memory, string[] memory, bool[] memory, uint256[] memory
     ) {
+        require(_studentDID == msg.sender, "Only license owner can access their licenses");
+        
         string[] memory studentEASUIDs = didToEASUIDs[_studentDID];
 
         string[] memory ipfsCIDs = new string[](studentEASUIDs.length);
@@ -125,7 +120,6 @@ contract PublicLicense is AccessControl {
 
         return (studentEASUIDs, ipfsCIDs, isValidArray, timestamps);
     }
-
 
     function getAllLicenses() external view onlyRole(ISSUER_ROLE) returns (License[] memory) {
         License[] memory allLicenses = new License[](easUIDs.length);

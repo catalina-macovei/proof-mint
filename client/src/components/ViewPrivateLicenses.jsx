@@ -26,15 +26,15 @@ const ViewPrivateLicenses = () => {
             let fetchedLicenses = [];
 
             try {
-                // Try fetching all licenses (admin-only)
                 fetchedLicenses = await contract.getAllLicenses();
             } catch (error) {
                 console.warn("Admin access denied or transaction reverted. Trying per-user fetch...");
                 const userAddress = await signer.getAddress();
                 const formattedAddress = ethers.getAddress(userAddress.trim());
 
-                // Call getLicensesByDID instead
-                const [easUIDs, ipfsCIDs, isValidArray, timestamps] = await contract.getLicensesByDID(formattedAddress);
+                const [easUIDs, ipfsCIDs, isValidArray, timestamps] = await contract.getLicensesByDID(formattedAddress, {
+                    gasLimit: 300000
+                });
 
                 if (easUIDs.length > 0) {
                     fetchedLicenses = easUIDs.map((easUID, index) => ({
@@ -55,8 +55,6 @@ const ViewPrivateLicenses = () => {
             setLoading(false);
         }
     };
-
-
 
     return (
         <div className="min-h-screen flex flex-col justify-center items-center p-10">

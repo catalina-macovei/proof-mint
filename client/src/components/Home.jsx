@@ -7,7 +7,6 @@ const Home = () => {
     <div className='flex flex-col items-center justify-center'>
       <Welcome />
       <Services />
-      <Footer />
     </div>
   )
 }

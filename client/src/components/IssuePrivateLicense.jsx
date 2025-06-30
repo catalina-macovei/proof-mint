@@ -9,13 +9,12 @@ import { createAttestation, verifyProof } from '../eas/merkel_private_attestatio
 
 const IssuePrivateLicense = ({ account }) => {
   const location = useLocation();
-  const certificateData = location.state; // Data passed from FacultyApplications
+  const certificateData = location.state;
 
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form fields
   const [formData, setFormData] = useState({
     universityDID: '',
     studentDID: '',
@@ -29,7 +28,6 @@ const IssuePrivateLicense = ({ account }) => {
   const [ipfsHash, setIpfsHash] = useState('');
   const [errors, setErrors] = useState({});
 
-  // Predefined degree options
   const degreeOptions = [
     'Bachelor of Science in Computer Science',
     'Bachelor of Science in Information Technology',
@@ -47,7 +45,6 @@ const IssuePrivateLicense = ({ account }) => {
   ];
 
   useEffect(() => {
-    // Auto-populate universityDID from session storage
     const walletAddress = sessionStorage.getItem('walletAddress');
     if (walletAddress) {
       setFormData(prev => ({
@@ -56,7 +53,6 @@ const IssuePrivateLicense = ({ account }) => {
       }));
     }
 
-    // Auto-populate fields from passed certificate data
     if (certificateData) {
       setFormData(prev => ({
         ...prev,
@@ -65,7 +61,7 @@ const IssuePrivateLicense = ({ account }) => {
         studentName: certificateData.studentName || ''
       }));
     }
-    // Check if we're coming from an application (you can pass student info via URL params or state)
+
     const urlParams = new URLSearchParams(window.location.search);
     const studentAddress = urlParams.get('studentAddress');
     const studentName = urlParams.get('studentName');
@@ -93,7 +89,6 @@ const IssuePrivateLicense = ({ account }) => {
       [name]: value
     }));
 
-    // Auto-generate studentDID when studentEthAddress changes
     if (name === 'studentEthAddress' && value) {
       setFormData(prev => ({
         ...prev,
@@ -101,7 +96,6 @@ const IssuePrivateLicense = ({ account }) => {
       }));
     }
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -113,7 +107,6 @@ const IssuePrivateLicense = ({ account }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Required field validations
     if (!formData.universityDID.trim()) {
       newErrors.universityDID = 'University DID is required';
     }
@@ -174,26 +167,21 @@ const IssuePrivateLicense = ({ account }) => {
       uploadData.append('file', proof);
       uploadData.append('studentDID', formData.studentDID);
 
-      // Upload the file and metadata to your server
       const result = await axios.post('http://localhost:8000/api/v1/proof', uploadData);
       console.log('File uploaded successfully:', result);
       setIpfsHash(result.data.ipfsHash.trim());
 
-      // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       console.log("Contract address", PRIVATE_LICENSE_CONTRACT_ADDRESS, PrivateLicense.abi, signer);
 
-      // Connect to your PrivateLicense contract using the signer
       const contract = new ethers.Contract(
         PRIVATE_LICENSE_CONTRACT_ADDRESS,
         PrivateLicense.abi,
         signer
       );
-
       console.log('Contract connected:', contract);
 
-      // Create values object from form data
       const values = [
         { name: "universityDID", value: formData.universityDID, type: "string" },
         { name: "studentDID", value: formData.studentDID, type: "string" },
@@ -206,7 +194,6 @@ const IssuePrivateLicense = ({ account }) => {
 
       console.log('Creating attestation with values:', values);
 
-      // Create the EAS attestation using the same signer and the values object
       const { attestationUID, multiProofJson } = await createAttestation(signer, values);
       console.log('Attestation UID:', attestationUID);
       console.log('Proof:', multiProofJson);
@@ -216,16 +203,36 @@ const IssuePrivateLicense = ({ account }) => {
 
       const multiProofString = JSON.stringify(multiProofJson);
 
-      // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
         attestationUID,
         result.data.ipfsHash.trim(),
         formData.studentEthAddress.trim(),
-        multiProofString
+        multiProofString,
+        { gasLimit: 300000 }
       );
 
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();
+
+      const isFromApplication = certificateData &&
+        certificateData.applicationId &&
+        certificateData.applicationId !== null &&
+        certificateData.applicationId !== undefined;
+
+      console.log('Certificate data:', certificateData);
+      console.log('Is from application:', isFromApplication);
+
+      if (isFromApplication) {
+        console.log('Updating application status for application ID:', certificateData.applicationId);
+        try {
+          await updateApplicationStatus(certificateData.applicationId, attestationUID);
+          console.log('Application status updated successfully');
+        } catch (updateError) {
+          console.warn('Failed to update application status, but private license was issued successfully:', updateError);
+        }
+      } else {
+        console.log('Private license form was not opened from an application - skipping status update');
+      }
 
       setMessage({
         type: 'success',
@@ -234,7 +241,6 @@ const IssuePrivateLicense = ({ account }) => {
         multiProofJson: multiProofJson,
       });
 
-      // Reset form after successful submission
       setFormData({
         universityDID: `did:ethr:${sessionStorage.getItem('walletAddress')}`,
         studentDID: '',
@@ -248,13 +254,81 @@ const IssuePrivateLicense = ({ account }) => {
 
     } catch (error) {
       console.error('Error:', error);
+
+      // Extract clean error message
+      const extractErrorMessage = (error) => {
+        // Check if it's a contract revert error with a reason
+        if (error.reason) {
+          return error.reason;
+        }
+
+        // Check if it's a revert object with args
+        if (error.revert && error.revert.args && error.revert.args.length > 0) {
+          return error.revert.args[0];
+        }
+
+        // Check if the error message contains a revert reason in quotes
+        const revertMatch = error.message.match(/execution reverted: "([^"]+)"/);
+        if (revertMatch) {
+          return revertMatch[1];
+        }
+
+        // Check for other common error patterns
+        const reasonMatch = error.message.match(/reason="([^"]+)"/);
+        if (reasonMatch) {
+          return reasonMatch[1];
+        }
+
+        // Fallback to the original message if no specific reason found
+        return error.message || 'Unknown error occurred';
+      };
+
+      const cleanErrorMessage = extractErrorMessage(error);
+
       setMessage({
         type: 'error',
-        text: error.message,
+        text: cleanErrorMessage,
       });
     }
+
     setIsSubmitting(false);
   };
+
+
+  const updateApplicationStatus = async (applicationId, attestationUID) => {
+    try {
+      console.log('Updating private license application with params:', {
+        applicationId,
+        attestationUID,
+        certificateData
+      });
+
+      const response = await fetch(`/applications/${applicationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          StudentID: certificateData.studentId,
+          FacultyID: certificateData.facultyId,
+          Status: 'Issued',
+          AttestationType: certificateData.attestationType || 'Private',
+          uid: attestationUID
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to update application status: ${response.status} - ${errorData}`);
+      }
+
+      const updatedApplication = await response.json();
+      console.log('Private license application status updated successfully:', updatedApplication);
+
+    } catch (error) {
+      console.error('Error updating private license application status:', error);
+      throw error;
+    }
+  };
+
 
   return (
     <div className="mt-24 w-10/12 max-w-4xl flex flex-col items-center justify-center m-auto">
@@ -267,7 +341,6 @@ const IssuePrivateLicense = ({ account }) => {
         )}
       </h2>
 
-      {/* Show application context if available */}
       {certificateData && (
         <div className="w-full mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Application Details</h3>
@@ -520,7 +593,7 @@ const IssuePrivateLicense = ({ account }) => {
                   {message.multiProofJson}
                 </pre>
                 <button
-                  onClick={() => navigator.clipboard.writeText(JSON.stringify(message.multiProofJson, null, 2))}
+                  onClick={() => navigator.clipboard.writeText(message.multiProofJson)}
                   className="mt-2 p-2 w-full text-gray-500 hover:text-blue-500 transition-colors flex justify-center items-center border rounded-md hover:bg-gray-50"
                   title="Copy proof JSON"
                 >

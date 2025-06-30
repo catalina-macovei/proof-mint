@@ -7,7 +7,6 @@ import { Link } from 'react-router';
 const ViewPublicLicenses = () => {
     const [licenses, setLicenses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
     useEffect(() => {
         fetchLicenses();
@@ -26,14 +25,14 @@ const ViewPublicLicenses = () => {
             let fetchedLicenses = [];
 
             try {
-                // Try fetching all licenses (admin-only)
-                fetchedLicenses = await contract.getAllLicenses();
+                fetchedLicenses = await contract.getAllLicenses({
+                    gasLimit: 300000
+                });
             } catch (error) {
                 console.warn("Admin access denied or transaction reverted. Trying per-user fetch...");
                 const userAddress = await signer.getAddress();
                 const formattedAddress = ethers.getAddress(userAddress.trim());
 
-                // Call getLicensesByDID instead
                 const [easUIDs, ipfsCIDs, isValidArray, timestamps] = await contract.getLicensesByDID(formattedAddress);
 
                 if (easUIDs.length > 0) {
@@ -55,8 +54,6 @@ const ViewPublicLicenses = () => {
             setLoading(false);
         }
     };
-
-
 
     return (
         <div className="min-h-screen flex flex-col justify-center items-center p-10">

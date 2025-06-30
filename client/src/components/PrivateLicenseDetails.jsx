@@ -7,6 +7,7 @@ import { HiMiniShieldCheck } from "react-icons/hi2";
 import { RevokeLicenseButton } from './RevokeLicenseButton';
 import PrivateLicense from '../artifacts/contracts/PrivateLicense.sol/PrivateLicense.json';
 import { FaCopy } from 'react-icons/fa';
+import IPFSFilePreview from './IPFSFilePreview';
 
 const PrivateLicenseDetails = () => {
     const { easUID } = useParams();
@@ -15,7 +16,6 @@ const PrivateLicenseDetails = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Only fetch license details if easUID is available
         if (easUID) {
             fetchLicenseDetails();
         }
@@ -32,17 +32,14 @@ const PrivateLicenseDetails = () => {
             );
 
             console.log("License Details uid:", easUID);
-
-            // Fetch full license details using easUID (directly from useParams)
-            const [ipfsCID, , studentDID, isValid, timestamp, proof] = await contract.getLicenseDetails(easUID);
-
+            const [ipfsCID, , studentDID, isValid, timestamp, proof] = await contract.getLicenseDetails(easUID, {
+                gasLimit: 300000 
+            });
 
             if (!easUID) {
                 setLoading(false);
                 return;
             }
-
-            // Store license details in state
             setLicense({ isValid, studentDID, ipfsCID, easUID, proof, timestamp });
 
             setLoading(false);
@@ -52,17 +49,12 @@ const PrivateLicenseDetails = () => {
         }
     };
 
-
-
-
-
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center items-center p-10">
             <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-300">
                 <h2 className="text-2xl font-semibold text-center mb-4 text-gray-800 dark:text-white">
                     Attestation Details
                 </h2>
-
 
                 {loading ? (
                     <div className="text-center">Loading license details...</div>
@@ -90,64 +82,55 @@ const PrivateLicenseDetails = () => {
                                 </p>
                             )}
 
-<div className="p-4 bg-gray-100 rounded-lg">
-    <div className="bg-white p-3 rounded-md shadow-sm">
-        <p className="text-sm font-mono break-words overflow-hidden text-gray-700">
-            <strong>Multi-Proof JSON:</strong>
-        </p>
-        <pre className="p-2 bg-gray-200 rounded-md text-sm text-gray-800 overflow-x-auto">
-    {(() => {
-        try {
-            // Step 1: Clean the proof string (remove unwanted escape characters)
-            let cleanedProof = license.proof;
-            if (typeof cleanedProof === "string") {
-                cleanedProof = cleanedProof.replace(/\\n/g, "\n").replace(/\\"/g, '"');
-            }
+                            <div className="p-4 bg-gray-100 rounded-lg">
+                                <div className="bg-white p-3 rounded-md shadow-sm">
+                                    <p className="text-sm font-mono break-words overflow-hidden text-gray-700">
+                                        <strong>Multi-Proof JSON:</strong>
+                                    </p>
+                                    <pre className="p-2 bg-gray-200 rounded-md text-sm text-gray-800 overflow-x-auto">
+                                        {(() => {
+                                            try {
+                                                let cleanedProof = license.proof;
+                                                if (typeof cleanedProof === "string") {
+                                                    cleanedProof = cleanedProof.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+                                                }
 
-            // Step 2: Remove the first and last quotes if they exist
-            if (cleanedProof.startsWith('"') && cleanedProof.endsWith('"')) {
-                cleanedProof = cleanedProof.slice(1, -1);  // Remove first and last characters
-            }
+                                                if (cleanedProof.startsWith('"') && cleanedProof.endsWith('"')) {
+                                                    cleanedProof = cleanedProof.slice(1, -1);
+                                                }
 
-            // Step 3: Display cleanedProof as a simple string
-            return <pre>{cleanedProof}</pre>;
-        } catch (e) {
-            console.error("Failed to process proof string:", e);
-            return "Invalid proof format";
-        }
-    })()}
-</pre>
+                                                return <pre>{cleanedProof}</pre>;
+                                            } catch (e) {
+                                                console.error("Failed to process proof string:", e);
+                                                return "Invalid proof format";
+                                            }
+                                        })()}
+                                    </pre>
 
-        <button
-            onClick={() => {
-                try {
-                    let cleanedProof = license.proof.replace(/\\n/g, "\n").replace(/\\"/g, '"');
-                    if (cleanedProof.startsWith('"') && cleanedProof.endsWith('"')) {
-                        cleanedProof = cleanedProof.slice(1, -1);  // Remove first and last characters
-                    }
-                    navigator.clipboard.writeText(cleanedProof);
-                } catch (e) {
-                    console.error("Failed to copy JSON");
-                }
-            }}
-            className="mt-2 p-2 w-full text-gray-500 hover:text-blue-500 transition-colors flex justify-center items-center"
-        >
-            <FaCopy className="mr-2" /> Copy Proof JSON
-        </button>
-    </div>
-</div>
-
-
-
-
-
-
-
-
+                                    <button
+                                        onClick={() => {
+                                            try {
+                                                let cleanedProof = license.proof.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+                                                if (cleanedProof.startsWith('"') && cleanedProof.endsWith('"')) {
+                                                    cleanedProof = cleanedProof.slice(1, -1);
+                                                }
+                                                navigator.clipboard.writeText(cleanedProof);
+                                            } catch (e) {
+                                                console.error("Failed to copy JSON");
+                                            }
+                                        }}
+                                        className="mt-2 p-2 w-full text-gray-500 hover:text-blue-500 transition-colors flex justify-center items-center"
+                                    >
+                                        <FaCopy className="mr-2" /> Copy Proof JSON
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-
-                        <RevokeLicenseButton ipfsCID={license.ipfsCID} className="absolute"></RevokeLicenseButton>
-
+                        <RevokeLicenseButton easUID={license.easUID} contractType="private" className="absolute"></RevokeLicenseButton>
+                        {/* IPFS File Preview Section */}
+                        {license.ipfsCID && (
+                            <IPFSFilePreview cid={license.ipfsCID} />
+                        )}
                     </div>
                 ) : (
                     <div className="text-center text-red-500">License not found</div>

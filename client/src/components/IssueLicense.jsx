@@ -9,13 +9,11 @@ import { issueAttestation } from '../eas/issue-attestation';
 
 const IssueLicense = ({ account }) => {
   const location = useLocation();
-  const certificateData = location.state; // Data passed from FacultyApplications
-
+  const certificateData = location.state;
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form fields
   const [formData, setFormData] = useState({
     universityDID: '',
     studentDID: '',
@@ -29,7 +27,6 @@ const IssueLicense = ({ account }) => {
   const [ipfsHash, setIpfsHash] = useState('');
   const [errors, setErrors] = useState({});
 
-  // Predefined degree options
   const degreeOptions = [
     'Bachelor of Science in Computer Science',
     'Bachelor of Science in Information Technology',
@@ -47,7 +44,6 @@ const IssueLicense = ({ account }) => {
   ];
 
   useEffect(() => {
-    // Auto-populate universityDID from session storage
     const walletAddress = sessionStorage.getItem('walletAddress');
     if (walletAddress) {
       setFormData(prev => ({
@@ -56,7 +52,6 @@ const IssueLicense = ({ account }) => {
       }));
     }
 
-    // Auto-populate fields from passed certificate data
     if (certificateData) {
       setFormData(prev => ({
         ...prev,
@@ -66,7 +61,6 @@ const IssueLicense = ({ account }) => {
       }));
     }
 
-    // Check URL params as fallback (for direct links)
     const urlParams = new URLSearchParams(window.location.search);
     const studentAddress = urlParams.get('studentAddress');
     const studentName = urlParams.get('studentName');
@@ -94,7 +88,6 @@ const IssueLicense = ({ account }) => {
       [name]: value
     }));
 
-    // Auto-generate studentDID when studentEthAddress changes
     if (name === 'studentEthAddress' && value) {
       setFormData(prev => ({
         ...prev,
@@ -102,7 +95,6 @@ const IssueLicense = ({ account }) => {
       }));
     }
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -114,7 +106,6 @@ const IssueLicense = ({ account }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Required field validations
     if (!formData.universityDID.trim()) {
       newErrors.universityDID = 'University DID is required';
     }
@@ -157,6 +148,41 @@ const IssueLicense = ({ account }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const updateApplicationStatus = async (applicationId, attestationUID) => {
+    try {
+      console.log('Updating application with params:', {
+        applicationId,
+        attestationUID,
+        certificateData
+      });
+
+      const response = await fetch(`/applications/${applicationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          StudentID: certificateData.studentId,
+          FacultyID: certificateData.facultyId,
+          Status: 'Issued',
+          AttestationType: certificateData.attestationType || 'Public',
+          uid: attestationUID
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to update application status: ${response.status} - ${errorData}`);
+      }
+
+      const updatedApplication = await response.json();
+      console.log('Application status updated successfully:', updatedApplication);
+
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      throw error;
+    }
+  };
+
+
   const processForm = async (event) => {
     event.preventDefault();
 
@@ -175,26 +201,21 @@ const IssueLicense = ({ account }) => {
       uploadData.append('file', proof);
       uploadData.append('studentDID', formData.studentDID);
 
-      // Upload the file and metadata to your server
       const result = await axios.post('http://localhost:8000/api/v1/proof', uploadData);
       console.log('File uploaded successfully:', result);
       setIpfsHash(result.data.ipfsHash.trim());
 
-      // Use the browser's provider/signer (MetaMask)
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       console.log("Contract address", PUBLIC_LICENSE_CONTRACT_ADDRESS, PublicLicense.abi, signer);
 
-      // Connect to your PublicLicense contract using the signer
       const contract = new ethers.Contract(
         PUBLIC_LICENSE_CONTRACT_ADDRESS,
         PublicLicense.abi,
         signer
       );
-
       console.log('Contract connected:', contract);
 
-      // Create values object from form data
       const values = [
         { name: "universityDID", value: formData.universityDID, type: "string" },
         { name: "studentDID", value: formData.studentDID, type: "string" },
@@ -207,19 +228,38 @@ const IssueLicense = ({ account }) => {
 
       console.log('Creating attestation with values:', values);
 
-      // Create the EAS attestation using the same signer and the values object
       const attestationUID = await issueAttestation(values, signer);
       console.log('Attestation UID:', attestationUID);
 
-      // Call the contract to issue the license with the attestation UID
       const tx = await contract.issueLicense(
         attestationUID,
         result.data.ipfsHash.trim(),
-        formData.studentEthAddress.trim()
+        formData.studentEthAddress.trim(),
+        { gasLimit: 300000 }
       );
 
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();
+
+      const isFromApplication = certificateData &&
+        certificateData.applicationId &&
+        certificateData.applicationId !== null &&
+        certificateData.applicationId !== undefined;
+
+      console.log('Certificate data:', certificateData);
+      console.log('Is from application:', isFromApplication);
+
+      if (isFromApplication) {
+        console.log('Updating application status for application ID:', certificateData.applicationId);
+        try {
+          await updateApplicationStatus(certificateData.applicationId, attestationUID);
+          console.log('Application status updated successfully');
+        } catch (updateError) {
+          console.warn('Failed to update application status, but license was issued successfully:', updateError);
+        }
+      } else {
+        console.log('License form was not opened from an application - skipping status update');
+      }
 
       setMessage({
         type: 'success',
@@ -227,7 +267,6 @@ const IssueLicense = ({ account }) => {
         hash: receipt.transactionHash,
       });
 
-      // Reset form after successful submission
       setFormData({
         universityDID: `did:ethr:${sessionStorage.getItem('walletAddress')}`,
         studentDID: '',
@@ -241,13 +280,57 @@ const IssueLicense = ({ account }) => {
 
     } catch (error) {
       console.error('Error:', error);
+
+      // Extract clean error message
+      const extractErrorMessage = (error) => {
+        // Check if it's a contract revert error with a reason
+        if (error.reason) {
+          return error.reason;
+        }
+
+        // Check if it's a revert object with args
+        if (error.revert && error.revert.args && error.revert.args.length > 0) {
+          return error.revert.args[0];
+        }
+
+        // Check if the error message contains a revert reason in quotes
+        const revertMatch = error.message.match(/execution reverted: "([^"]+)"/);
+        if (revertMatch) {
+          return revertMatch[1];
+        }
+
+        // Check for other common error patterns
+        const reasonMatch = error.message.match(/reason="([^"]+)"/);
+        if (reasonMatch) {
+          return reasonMatch[1];
+        }
+
+        // Check for user rejection
+        if (error.message.includes('user rejected') || error.code === 'ACTION_REJECTED') {
+          return 'Transaction was rejected by user';
+        }
+
+        // Check for insufficient funds
+        if (error.message.includes('insufficient funds')) {
+          return 'Insufficient funds to complete transaction';
+        }
+
+        // Fallback to the original message if no specific reason found
+        return error.message || 'Unknown error occurred';
+      };
+
+      const cleanErrorMessage = extractErrorMessage(error);
+
       setMessage({
         type: 'error',
-        text: error.message,
+        text: cleanErrorMessage,
       });
     }
+
     setIsSubmitting(false);
   };
+
+
 
   return (
     <div className="mt-24 w-10/12 max-w-4xl flex flex-col items-center justify-center m-auto">
@@ -260,7 +343,6 @@ const IssueLicense = ({ account }) => {
         )}
       </h2>
 
-      {/* Show application context if available */}
       {certificateData && (
         <div className="w-full mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <h3 className="text-lg font-semibold text-green-900 mb-2">Application Details</h3>
@@ -286,7 +368,6 @@ const IssueLicense = ({ account }) => {
       )}
 
       <form onSubmit={processForm} className="w-full space-y-6 bg-white p-8 rounded-lg shadow-md">
-        {/* University DID */}
         <div>
           <label htmlFor="universityDID" className="block text-sm font-medium text-gray-700 mb-2">
             University DID *
@@ -305,7 +386,6 @@ const IssueLicense = ({ account }) => {
           <p className="text-gray-500 text-sm mt-1">Automatically populated from your wallet address</p>
         </div>
 
-        {/* Student Ethereum Address */}
         <div>
           <label htmlFor="studentEthAddress" className="block text-sm font-medium text-gray-700 mb-2">
             Student Ethereum Address *
@@ -323,7 +403,6 @@ const IssueLicense = ({ account }) => {
           {errors.studentEthAddress && <p className="text-red-500 text-sm mt-1">{errors.studentEthAddress}</p>}
         </div>
 
-        {/* Student DID */}
         <div>
           <label htmlFor="studentDID" className="block text-sm font-medium text-gray-700 mb-2">
             Student DID *
@@ -342,7 +421,6 @@ const IssueLicense = ({ account }) => {
           <p className="text-gray-500 text-sm mt-1">Automatically generated from student Ethereum address</p>
         </div>
 
-        {/* Student Name */}
         <div>
           <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-2">
             Student Name *
@@ -360,25 +438,6 @@ const IssueLicense = ({ account }) => {
           {errors.studentName && <p className="text-red-500 text-sm mt-1">{errors.studentName}</p>}
         </div>
 
-        {/* Student Name */}
-        <div>
-          <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-2">
-            Student Name *
-          </label>
-          <input
-            type="text"
-            id="studentName"
-            name="studentName"
-            value={formData.studentName}
-            onChange={handleInputChange}
-            className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${errors.studentName ? 'border-red-500' : 'border-gray-300'
-              }`}
-            placeholder="Enter student's full name"
-          />
-          {errors.studentName && <p className="text-red-500 text-sm mt-1">{errors.studentName}</p>}
-        </div>
-
-        {/* Graduation Year */}
         <div>
           <label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-2">
             Graduation Year *
@@ -397,7 +456,6 @@ const IssueLicense = ({ account }) => {
           {errors.graduationYear && <p className="text-red-500 text-sm mt-1">{errors.graduationYear}</p>}
         </div>
 
-        {/* Degree */}
         <div>
           <label htmlFor="degree" className="block text-sm font-medium text-gray-700 mb-2">
             Degree *
@@ -420,7 +478,6 @@ const IssueLicense = ({ account }) => {
           {errors.degree && <p className="text-red-500 text-sm mt-1">{errors.degree}</p>}
         </div>
 
-        {/* Issuance Date */}
         <div>
           <label htmlFor="issuanceDate" className="block text-sm font-medium text-gray-700 mb-2">
             Issuance Date *
@@ -438,7 +495,6 @@ const IssueLicense = ({ account }) => {
           <p className="text-gray-500 text-sm mt-1">Automatically set to today's date</p>
         </div>
 
-        {/* Proof Document */}
         <div>
           <label htmlFor="proof" className="block text-sm font-medium text-gray-700 mb-2">
             Proof Document *
@@ -455,7 +511,6 @@ const IssueLicense = ({ account }) => {
           <p className="text-gray-500 text-sm mt-1">Upload supporting documentation (PDF, DOC, or image files)</p>
         </div>
 
-        {/* IPFS Hash Display */}
         {ipfsHash && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -480,7 +535,6 @@ const IssueLicense = ({ account }) => {
           </div>
         )}
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -490,7 +544,6 @@ const IssueLicense = ({ account }) => {
         </button>
       </form>
 
-      {/* Messages */}
       {message && (
         <div className="mt-6 w-full space-y-4">
           <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100' : 'bg-red-100'}`}>
@@ -499,7 +552,6 @@ const IssueLicense = ({ account }) => {
             </p>
           </div>
 
-          {/* Transaction Hash */}
           {message.hash && (
             <div className="p-4 bg-gray-100 rounded-lg">
               <div className="flex items-center justify-between bg-white p-3 rounded-md shadow-sm">
@@ -522,7 +574,6 @@ const IssueLicense = ({ account }) => {
         </div>
       )}
 
-      {/* Form Instructions */}
       <div className="mt-8 w-full bg-green-50 p-6 rounded-lg">
         <h3 className="text-lg font-semibold text-green-900 mb-3">Public Attestation Instructions:</h3>
         <ul className="text-sm text-green-800 space-y-2">

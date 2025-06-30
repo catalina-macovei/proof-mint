@@ -8,7 +8,7 @@ export default function ApplicationForm() {
   const [faculties, setFaculties] = useState([]);
   const [selectedFacultyID, setSelectedFacultyID] = useState('');
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // 'error' or 'success'
+  const [messageType, setMessageType] = useState(''); 
   const [attestationType, setAttestationType] = useState('Public'); 
 
   useEffect(() => {
@@ -21,7 +21,6 @@ export default function ApplicationForm() {
 
     setEthAddress(walletAddress);
 
-    // First, get user info
     fetch(`/users/eth/${walletAddress}`)
       .then(res => {
         console.log('User response status:', res.status);
@@ -33,7 +32,6 @@ export default function ApplicationForm() {
         console.log('User data received:', userData);
         setUserInfo(userData);
 
-        // Then, get student info using UserID
         const userID = userData.UserID || userData.userid;
         console.log('UserID for student lookup:', userID);
 
@@ -54,7 +52,6 @@ export default function ApplicationForm() {
           throw new Error(`Student fetch failed - Status: ${res.status}`);
         }
 
-        // Check if response has content
         const contentType = res.headers.get('content-type');
         console.log('Student response content-type:', contentType);
 
@@ -143,7 +140,6 @@ export default function ApplicationForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Student Information Section */}
         <div className="bg-gray-50 p-4 rounded-md border">
           <h3 className="text-lg font-medium text-gray-700 mb-3">Student Information</h3>
 

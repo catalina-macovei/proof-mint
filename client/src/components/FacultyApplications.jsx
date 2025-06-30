@@ -22,20 +22,17 @@ export default function FacultyApplications() {
                     return;
                 }
 
-                // Get user info
                 const userResponse = await fetch(`/users/eth/${walletAddress}`);
                 if (!userResponse.ok) throw new Error('User not found');
                 const userData = await userResponse.json();
                 setUserInfo(userData);
 
-                // Get faculty info
                 const userID = userData.UserID || userData.userid;
                 const facultyResponse = await fetch(`/faculties/user/${userID}`);
                 if (!facultyResponse.ok) throw new Error('Faculty not found');
                 const facultyData = await facultyResponse.json();
                 setFacultyInfo(facultyData);
 
-                // Get applications for this faculty
                 const facultyID = facultyData.FacultyID || facultyData.facultyid;
                 const applicationsResponse = await fetch(`/applications/faculty/${facultyID}`);
                 if (!applicationsResponse.ok) throw new Error('Failed to fetch applications');
@@ -54,11 +51,10 @@ export default function FacultyApplications() {
         fetchFacultyApplications();
     }, []);
 
+
     const handleIssueCertificate = (application) => {
-        // Determine if it's private or public based on AttestationType
         const isPrivate = (application.attestationtype || application.AttestationType)?.toLowerCase() === 'private';
 
-        // Prepare the data to pass
         const certificateData = {
             studentAddress: application.studentethaddress,
             studentName: application.studentname,
@@ -69,7 +65,6 @@ export default function FacultyApplications() {
             attestationType: application.attestationtype || application.AttestationType || 'Public'
         };
 
-        // Navigate to the appropriate form with data
         if (isPrivate) {
             navigate('/issue-private-license', { state: certificateData });
         } else {
@@ -95,7 +90,6 @@ export default function FacultyApplications() {
             });
 
             if (response.ok) {
-                // Update the local state
                 setApplications(prev => prev.map(app =>
                     (app.applicationid || app.ApplicationID) === applicationId
                         ? { ...app, status: newStatus, Status: newStatus }
@@ -114,6 +108,31 @@ export default function FacultyApplications() {
         }
     };
 
+    const handleViewDiplomaDetails = (application) => {
+        const licenseUID = application.uid || application.UID;
+        const attestationType = (application.attestationtype || application.AttestationType)?.toLowerCase();
+
+        console.log('Viewing diploma details for application:', application);
+        console.log('License UID:', licenseUID);
+        console.log('Attestation Type:', attestationType);
+
+        if (licenseUID && licenseUID.trim() !== '') {
+            if (attestationType === 'private') {
+                console.log(`Navigating to private license: /private-license/${licenseUID}`);
+                navigate(`/private-license/${licenseUID}`);
+            } else {
+                console.log(`Navigating to public license: /license/${licenseUID}`);
+                navigate(`/license/${licenseUID}`);
+            }
+        } else {
+            console.error('No UID found for this application:', application);
+            setMessage('Unable to view diploma details - License UID not found. The certificate may not have been properly issued.');
+            setMessageType('error');
+            setTimeout(() => setMessage(''), 5000);
+        }
+    };
+
+
 
     const getStatusBadgeClass = (status) => {
         switch (status?.toLowerCase()) {
@@ -125,6 +144,8 @@ export default function FacultyApplications() {
                 return 'bg-red-100 text-red-800 border-red-200';
             case 'in review':
                 return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'issued':
+                return 'bg-purple-100 text-purple-800 border-purple-200';
             default:
                 return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -156,7 +177,6 @@ export default function FacultyApplications() {
     return (
         <div className="min-h-screen py-8 mt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">Faculty Applications Dashboard</h1>
 
@@ -187,7 +207,6 @@ export default function FacultyApplications() {
                     )}
                 </div>
 
-                {/* Filter Tabs */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8 px-6">
@@ -196,6 +215,7 @@ export default function FacultyApplications() {
                                 { key: 'pending', label: 'Pending', count: applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'pending').length },
                                 { key: 'in review', label: 'In Review', count: applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'in review').length },
                                 { key: 'approved', label: 'Approved', count: applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'approved').length },
+                                { key: 'issued', label: 'Issued', count: applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'issued').length },
                                 { key: 'rejected', label: 'Rejected', count: applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'rejected').length },
                             ].map((tab) => (
                                 <button
@@ -213,7 +233,6 @@ export default function FacultyApplications() {
                     </div>
                 </div>
 
-                {/* Message */}
                 {message && (
                     <div className={`mb-6 p-4 rounded-md ${messageType === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                         }`}>
@@ -221,7 +240,6 @@ export default function FacultyApplications() {
                     </div>
                 )}
 
-                {/* Applications List */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200">
                         <h2 className="text-xl font-semibold text-gray-900">
@@ -298,62 +316,69 @@ export default function FacultyApplications() {
                                             </div>
                                         </div>
 
-                                        {/* Action buttons */}
                                         <div className="ml-4 flex-shrink-0">
                                             <div className="flex flex-col gap-2">
-                                                {(application.status || application.Status)?.toLowerCase() === 'pending' && (
+                                                {(application.status || application.Status)?.toLowerCase() !== 'issued' && (
                                                     <>
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'In Review')}
-                                                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-                                                        >
-                                                            Mark In Review
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Approved')}
-                                                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-                                                        >
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Rejected')}
-                                                            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
-                                                        >
-                                                            Reject
-                                                        </button>
+                                                        {(application.status || application.Status)?.toLowerCase() === 'pending' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'In Review')}
+                                                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                                                >
+                                                                    Mark In Review
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Approved')}
+                                                                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Rejected')}
+                                                                    className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )}
+
+                                                        {(application.status || application.Status)?.toLowerCase() === 'in review' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Approved')}
+                                                                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Rejected')}
+                                                                    className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )}
+
+                                                        {(application.status || application.Status)?.toLowerCase() === 'approved' && (
+                                                            <button
+                                                                onClick={() => handleIssueCertificate(application)}
+                                                                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                Issue {(application.attestationtype || application.AttestationType) === 'Private' ? 'Private' : 'Public'} Certificate
+                                                            </button>
+                                                        )}
                                                     </>
                                                 )}
 
-                                                {(application.status || application.Status)?.toLowerCase() === 'in review' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Approved')}
-                                                            className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-                                                        >
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(application.applicationid || application.ApplicationID, 'Rejected')}
-                                                            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
-                                                        >
-                                                            Reject
-                                                        </button>
-                                                    </>
-                                                )}
-
-                                                {(application.status || application.Status)?.toLowerCase() === 'approved' && (
+                                                {(application.status || application.Status)?.toLowerCase() === 'issued' && (
                                                     <button
-                                                        onClick={() => handleIssueCertificate(application)}
-                                                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                                        onClick={() => handleViewDiplomaDetails(application)}
+                                                        className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors"
                                                     >
-                                                        Issue {(application.attestationtype || application.AttestationType) === 'Private' ? 'Private' : 'Public'} Certificate
+                                                        View Diploma Details
                                                     </button>
                                                 )}
-
-
-                                                <button className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors">
-                                                    View Details
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -363,9 +388,8 @@ export default function FacultyApplications() {
                     )}
                 </div>
 
-                {/* Summary Statistics */}
                 {applications.length > 0 && (
-                    <div className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-6 gap-4">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <div className="text-2xl font-bold text-gray-900">
                                 {applications.length}
@@ -389,6 +413,12 @@ export default function FacultyApplications() {
                                 {applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'approved').length}
                             </div>
                             <div className="text-sm text-gray-600">Approved</div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                            <div className="text-2xl font-bold text-purple-600">
+                                {applications.filter(app => (app.status || app.Status)?.toLowerCase() === 'issued').length}
+                            </div>
+                            <div className="text-sm text-gray-600">Issued</div>
                         </div>
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <div className="text-2xl font-bold text-red-600">

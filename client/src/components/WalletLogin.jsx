@@ -20,7 +20,7 @@ const WalletLogin = ({ onLogin }) => {
     const [updateMessage, setUpdateMessage] = useState('');
     const [updateMessageType, setUpdateMessageType] = useState('');
 
-    // Profile form state
+    // Profile form 
     const [profileData, setProfileData] = useState({
         UserType: '',
         UserName: '',
@@ -44,7 +44,7 @@ const WalletLogin = ({ onLogin }) => {
                         sessionStorage.setItem('role', userRole);
                     });
             }
-            // Fetch user info when address is loaded
+            //when address is loaded, fetch user info
             fetchUserInfo(savedAddress);
         }
     }, []);
@@ -158,7 +158,9 @@ const WalletLogin = ({ onLogin }) => {
                 PublicLicense.abi,
                 provider
             );
-            return await contract.getRole(addr);
+            return await contract.getRole(addr, {
+                gasLimit: 300000
+            });
         } catch (error) {
             console.error('Error fetching role from contract:', error);
             return 'Unknown';
@@ -252,7 +254,7 @@ const WalletLogin = ({ onLogin }) => {
                     <p className="text-gray-600 mt-4 text-sm">
                         Don't have an account?{' '}
                         <NavLink
-                            to="/register"
+                            to="https://metamask.io/"
                             className="text-blue-600 hover:text-blue-800 font-medium underline"
                         >
                             Click here to register.
@@ -310,7 +312,6 @@ const WalletLogin = ({ onLogin }) => {
                 </div>
             )}
 
-            {/* Wallet Connection Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     <div
@@ -342,7 +343,6 @@ const WalletLogin = ({ onLogin }) => {
                 </div>
             )}
 
-            {/* Profile Update Modal */}
             {isProfileModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     <div
@@ -413,15 +413,11 @@ const WalletLogin = ({ onLogin }) => {
                                 />
                             </div>
 
-                            {/* Read-only fields for reference */}
                             <div className="bg-gray-50 p-3 rounded-md">
-
                                 <span className="font-medium">Ethereum Address:</span>
                                 <div className="font-mono text-xs break-all">{address}</div>
-
                             </div>
 
-                            {/* Update Message */}
                             {updateMessage && (
                                 <div className={`p-3 rounded-md ${updateMessageType === 'success'
                                     ? 'bg-green-100 text-green-800 border border-green-200'
@@ -431,7 +427,6 @@ const WalletLogin = ({ onLogin }) => {
                                 </div>
                             )}
 
-                            {/* Action Buttons */}
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="submit"

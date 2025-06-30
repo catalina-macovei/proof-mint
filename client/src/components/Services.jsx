@@ -8,20 +8,19 @@ const Services = () => {
     {
       title: "Private Attestation",
       description: "Secure, permissioned, and on-chain attestation for private entities.",
-      link: "/private-license",
+      link: "/learn-more/private-license",
       icon: <FaLock className="text-4xl text-violet-500" />,
     },
     {
       title: "Public Attestation",
       description: "Transparent and verifiable attestation for open access and public use.",
-      link: "/public-license",
+      link: "/learn-more/public-license",
       icon: <FaGlobe className="text-4xl text-blue-500" />,
     },
   ];
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center text-center p-10 relative">
-      {/* Background Glow Effect */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-violet-300 via-white to-blue-300 opacity-20 blur-3xl"></div>
 
       <motion.h1 

@@ -91,22 +91,35 @@ router.get('/faculty/:facultyId', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { StudentID, FacultyID, Status, AttestationType } = req.body;
+  const { StudentID, FacultyID, Status, AttestationType, uid } = req.body;
+  
+  // Print the parameters being updated
+  console.log('Updating application with ID:', req.params.id);
+  console.log('Parameters being updated:', {
+    StudentID,
+    FacultyID,
+    Status,
+    AttestationType,
+    uid
+  });
+  
   try {
     const result = await pool.query(
       `UPDATE Applications 
-   SET StudentID = $1, FacultyID = $2, Status = $3, AttestationType = $4
-   WHERE ApplicationID = $5 
-   RETURNING *`,
-      [StudentID, FacultyID, Status, AttestationType, req.params.id]
+       SET StudentID = $1, FacultyID = $2, Status = $3, AttestationType = $4, uid = $5 
+       WHERE ApplicationID = $6 
+       RETURNING *`,
+      [StudentID, FacultyID, Status, AttestationType, uid, req.params.id]
     );
-
+    
+    console.log('Update successful. Updated record:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error updating application:', err.message);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.delete('/:id', async (req, res) => {
   try {

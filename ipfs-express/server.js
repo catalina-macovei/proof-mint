@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import W3client from './w3client.js';
 import { ethers } from 'ethers';
 import { createRequire } from 'module';
+import fetch from 'node-fetch';
 
 const require = createRequire(import.meta.url);
 const LicenseManager = require('../artifacts/contracts/LicenseManager.sol/LicenseManager.json');
@@ -44,32 +45,6 @@ const upload = multer({ blobStorage });
 
 const testAddress = "0x742e642c45a0f10159e4f3d46c2468dc85e9d706"; // student DID
 
-// application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
-//     if (!req.file) {
-//         return res.status(400).json({ message: 'No file uploaded' });
-//     }
-
-//     try {
-//         const fileBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
-//         const uploadOptions = {}; 
-//         const cid = await w2client.client.uploadFile(fileBlob, uploadOptions);
-        
-//         const studentDID = req.body.studentDID.split(':')[2]; // Extract address from DID
-//         const tx = await contract.issueLicense(cid, studentDID);
-//         const receipt = await tx.wait();
-
-//         console.log('File uploaded and license issued -> CID:', cid, 'TX:', receipt.transactionHash);
-        
-//         res.status(200).json({
-//             message: 'Success',
-//             cid: cid,
-//             transactionHash: receipt.transactionHash
-//         });
-//     } catch (error) {
-//         console.error('Error:', error);
-//         res.status(500).json({ message: 'Error processing request' });
-//     }
-// });
 
 
 application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
@@ -96,6 +71,62 @@ application.post('/api/v1/proof', upload.single('file'), async (req, res) => {
 
 // Route to revoke a license
 application.use(express.json());
+
+
+const gatewayUrl = (cid) => `https://${cid}.ipfs.w3s.link`;
+
+// Route to get file metadata by HEAD request
+application.get('/api/v1/file-info/:cid', async (req, res) => {
+  const { cid } = req.params;
+  if (!cid) return res.status(400).json({ message: 'CID is required' });
+
+  const url = gatewayUrl(cid);
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok)
+      return res.status(404).json({ message: 'File not found on IPFS gateway' });
+
+    res.json({
+      name: cid,
+      type: response.headers.get('content-type') || 'application/octet-stream',
+      size: parseInt(response.headers.get('content-length') || '0', 10),
+      cid,
+    });
+  } catch (error) {
+    console.error('Metadata Fetch Error:', error);
+    res.status(500).json({ message: 'Error fetching file metadata from IPFS gateway' });
+  }
+});
+
+// Route to retrieve file content via gateway proxy
+application.get('/api/v1/file/:cid', async (req, res) => {
+  const { cid } = req.params;
+  if (!cid) return res.status(400).json({ message: 'CID is required' });
+
+  const url = gatewayUrl(cid);
+  try {
+    const response = await fetch(url);
+    if (!response.ok)
+      return res.status(404).json({ message: 'File not found on IPFS gateway' });
+
+    // Forward relevant headers
+    ['content-type', 'content-length', 'cache-control'].forEach((name) => {
+      const value = response.headers.get(name);
+      if (value) res.setHeader(name, value);
+    });
+    // Ensure inline disposition
+    res.setHeader('Content-Disposition', `inline; filename="${cid}"`);
+
+    // Stream the data
+    response.body.pipe(res);
+  } catch (error) {
+    console.error('Content Fetch Error:', error);
+    res.status(500).json({ message: 'Error fetching file content from IPFS gateway' });
+  }
+});
+
+
+
 
 
 application.get('/api/v1/revoke-license', async (req, res) => {
