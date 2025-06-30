@@ -33,7 +33,7 @@ const ViewPrivateLicenses = () => {
                 const formattedAddress = ethers.getAddress(userAddress.trim());
 
                 const [easUIDs, ipfsCIDs, isValidArray, timestamps] = await contract.getLicensesByDID(formattedAddress, {
-                    gasLimit: 300000
+                    gasLimit: 1000000
                 });
 
                 if (easUIDs.length > 0) {

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import { verifyProof } from '../eas/merkel_private_attestation';
-
+import { PRIVATE_LICENSE_CONTRACT_ADDRESS } from '../config/contract';
+import PrivateLicense from '../artifacts/contracts/PrivateLicense.sol/PrivateLicense.json';
 
 const VerifyPrivateLicense = () => {
     const [attestationUID, setAttestationUID] = useState('');
     const [multiProofJson, setMultiProofJson] = useState('');
     const [verificationResult, setVerificationResult] = useState(null);
+    const [contractVerificationResult, setContractVerificationResult] = useState(null);
     const [error, setError] = useState('');
 
     const handleVerify = async () => {
@@ -54,15 +56,52 @@ const VerifyPrivateLicense = () => {
     
             console.log("Final MultiProof JSON String:", stringifiedProof);
     
-            // Call verifyProof with properly formatted data
-            const result = await verifyProof(signer, cleanedAttestationUID, stringifiedProof);
-            setVerificationResult(result);
+            // Step 1: Verify the cryptographic proof
+            const proofResult = await verifyProof(signer, cleanedAttestationUID, stringifiedProof);
+            setVerificationResult(proofResult);
+            
+            // Step 2: Check attestation status on the private license contract
+            // Uncomment and modify these lines once you have the private license contract setup
+            
+            const contract = new ethers.Contract(
+                PRIVATE_LICENSE_CONTRACT_ADDRESS,
+                PrivateLicense.abi,
+                provider
+            );
+
+            // Assuming your private license contract has a method to check attestation status
+            // You'll need to adjust the method name based on your actual contract
+            const [isValid, studentDID] = await contract.verifyLicense(cleanedAttestationUID, {
+                gasLimit: 1000000
+            });
+            
+            setContractVerificationResult({
+                isValid,
+                studentDID
+            });
+            
+            
             setError("");
         } catch (err) {
             setError("Error verifying proof: " + err.message);
             console.error(err);
         }
     };
+    
+    // Determine overall verification status
+    const getOverallStatus = () => {
+        if (verificationResult === null) return null;
+        
+        // If contract verification is implemented, both must be true
+        if (contractVerificationResult !== null) {
+            return verificationResult && contractVerificationResult.isValid;
+        }
+        
+        // If only proof verification is done
+        return verificationResult;
+    };
+
+    const overallStatus = getOverallStatus();
     
     return (
         <div className="min-h-screen flex flex-col justify-center items-center p-10">
@@ -95,11 +134,36 @@ const VerifyPrivateLicense = () => {
 
                 {error && <p className="mt-4 text-red-500 font-medium">{error}</p>}
                 
-                {verificationResult !== null && (
-                    <div className={`mt-4 p-4 rounded-lg ${verificationResult ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                        <p className={`text-lg font-medium ${verificationResult ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
-                            Verification Result: {verificationResult ? 'Valid' : 'Invalid'}
+                {/* Overall Verification Result */}
+                {overallStatus !== null && (
+                    <div className={`mt-4 p-4 rounded-lg ${overallStatus ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
+                        <p className={`text-lg font-medium ${overallStatus ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                            Verification Result: {overallStatus ? 'Valid' : 'Invalid'}
                         </p>
+                    </div>
+                )}
+
+                {/* Detailed Results */}
+                {verificationResult !== null && (
+                    <div className="mt-4 space-y-2">
+                        <div className={`p-3 rounded-lg ${verificationResult ? 'bg-green-50 dark:bg-green-900/50' : 'bg-red-50 dark:bg-red-900/50'}`}>
+                            <p className={`text-sm font-medium ${verificationResult ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                                Cryptographic Proof: {verificationResult ? 'Valid' : 'Invalid'}
+                            </p>
+                        </div>
+                        
+                        {contractVerificationResult !== null && (
+                            <div className={`p-3 rounded-lg ${contractVerificationResult.isValid ? 'bg-green-50 dark:bg-green-900/50' : 'bg-red-50 dark:bg-red-900/50'}`}>
+                                <p className={`text-sm font-medium ${contractVerificationResult.isValid ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                                    Contract Status: {contractVerificationResult.isValid ? 'Valid (Not Revoked)' : 'Invalid (Revoked)'}
+                                </p>
+                                {contractVerificationResult.studentDID && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        Student DID: {contractVerificationResult.studentDID}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -109,4 +173,3 @@ const VerifyPrivateLicense = () => {
 };
 
 export default VerifyPrivateLicense;
-

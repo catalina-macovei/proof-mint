@@ -26,7 +26,7 @@ const ViewPublicLicenses = () => {
 
             try {
                 fetchedLicenses = await contract.getAllLicenses({
-                    gasLimit: 300000
+                    gasLimit: 1000000
                 });
             } catch (error) {
                 console.warn("Admin access denied or transaction reverted. Trying per-user fetch...");

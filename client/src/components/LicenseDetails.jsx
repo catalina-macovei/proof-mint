@@ -51,7 +51,7 @@ const LicenseDetails = () => {
             console.log("License Details uid:", easUID);
 
             const [ipfsCID, , studentDID, isValid, timestamp] = await contract.getLicenseDetails(easUID, {
-                gasLimit: 300000 
+                gasLimit: 1000000 
             });
 
             if (!easUID) {

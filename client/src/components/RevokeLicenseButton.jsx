@@ -72,7 +72,7 @@ const RevokeLicenseButton = ({ easUID, contractType = 'public' }) => {
             console.log('Contract address:', contractConfig.address);
 
             const tx = await contract.revokeLicense(easUID, {
-            gasLimit: 300000 
+            gasLimit: 1000000 
             });
             setTxHash(tx.hash);
             

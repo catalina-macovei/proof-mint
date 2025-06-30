@@ -234,9 +234,7 @@ const IssueLicense = ({ account }) => {
       const tx = await contract.issueLicense(
         attestationUID,
         result.data.ipfsHash.trim(),
-        formData.studentEthAddress.trim(),
-        { gasLimit: 300000 }
-      );
+        formData.studentEthAddress.trim());
 
       setMessage('Transaction submitted. Waiting for confirmation...');
       const receipt = await tx.wait();

@@ -159,7 +159,7 @@ const WalletLogin = ({ onLogin }) => {
                 provider
             );
             return await contract.getRole(addr, {
-                gasLimit: 300000
+                gasLimit: 1000000
             });
         } catch (error) {
             console.error('Error fetching role from contract:', error);
